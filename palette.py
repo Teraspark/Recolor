@@ -118,7 +118,7 @@ class Palette:
     self.colors[i].g= c[GREEN]
     self.colors[i].b= c[BLUE]
     
-  def get_color(i):
+  def get_color(self,i):
     return self.colors[i]
   
   def find_color(self,cx):
