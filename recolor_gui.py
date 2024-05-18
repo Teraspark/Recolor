@@ -486,9 +486,16 @@ class App:
     display.configure(
       scrollregion=display.bbox(tk.ALL))
   
+  def update_palette(self):
+    for cf in self.cfl:
+      c = cf.get_color()
+      c = tuple(PD.FROMGBA(n) for n in c)
+      self.dispal.edit_color(cf.pin,c)
+  
   def reset_colors(self):
     for cf in self.cfl:
       cf.reset_color(False)
+    self.update_palette()
     self.update_image()
   
   def zoomed_image(self):
