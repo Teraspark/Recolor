@@ -27,6 +27,14 @@ def isValidFile(file):
 		return False
 	return file.is_file()
 
+def ishex(h):
+  s1 = set(h.lower().removeprefix('0x'))
+  s2 = set('0123456789abcdef')
+  if s1 < s2:
+    return True
+  else:
+    return False
+
 class palstruct():
   gindex = 0
   pindex = 0
@@ -136,6 +144,13 @@ class ColorBox(tk.Frame):
     b = self.values['b'].get()
     return (r,g,b)
   
+  def set_color(self,c,redraw=True):
+    self.values['r'].set(c[PD.R])
+    self.values['g'].set(c[PD.G])
+    self.values['b'].set(c[PD.B])
+    if redraw: self.update_color()
+    
+    
 class Spinbox(tk.Spinbox):
   '''Spinbox, but with scrolling to change values'''
   def __init__(self,parent,*args,**kwargs):
@@ -326,7 +341,9 @@ class App:
       command = self.reset_colors,
       text = "Reset All")
     buttres.grid(row=0,column=1,sticky=tk.N)
-    buttimp = tk.Button(palbox,text="Import")
+    buttimp = tk.Button(palbox,
+      text="Import",
+      command=self.paste_hex)
     buttimp.grid(row=0,column=2,sticky=tk.N)
     buttexp = tk.Button(palbox,
       text="Export",
@@ -518,6 +535,30 @@ class App:
       title = 'Copied to Clipboard',
       message = palclip)
   
+  def paste_hex(self):
+    if not self.cfl: return
+    try:
+      paste = self.root.clipboard_get()
+    except tk.clError:
+      paste = ''
+    if paste and ishex(paste): 
+      if self.cfl:
+        pal = PD.Palette.from_gba_hex(paste)
+        #use pasted hex to build display palette
+        for cf in self.cfl:
+          c = pal.get_color(cf.pin)
+          cf.set_color(c.flatten(),False)
+        #update display palette:
+        for p in pal.colors:
+          p.r = PD.FROMGBA(p.r)
+          p.g = PD.FROMGBA(p.g)
+          p.b = PD.FROMGBA(p.b)
+        self.dispal = pal
+        self.update_image()
+    else:
+      prompt = messagebox.showwarning(
+        title = 'Import Error',
+        message = 'Invalid input for Import')
 
 
 
