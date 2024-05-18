@@ -339,6 +339,10 @@ class App:
     self.frames['palette'].grid(row=1,rowspan=3,
       column=0, columnspan=5,
       sticky=(tk.W,tk.E))
+    CreateToolTip(buttimp,
+      'import palette from clipboard')
+    CreateToolTip(buttexp,
+      'export palette to clipboard as hexadecimal')
     # self.frames['palette']['borderwidth']=3
     # self.frames['palette']['relief']=tk.RIDGE
     
