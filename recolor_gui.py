@@ -66,7 +66,7 @@ class ColorBox(tk.Frame):
     '''
     super().__init__(parent, *args, **kwargs)
     self.ocrgb = src #hold original color
-    self.pin = id #palette index
+    # self.pin = id #palette index
     self.update = update
     self.values = {}
     self.values['r']=tk.IntVar()
@@ -75,6 +75,9 @@ class ColorBox(tk.Frame):
     self.values['index'] = tk.IntVar()
     self.values['notes'] = tk.StringVar()
     self.values['ctext'] = tk.StringVar()
+    
+    # palette color id
+    self.values['cid'] = tk.IntVar(value=id)
     
     # source color
     src = tuple(PD.FROMGBA(c) for c in src)
@@ -90,30 +93,31 @@ class ColorBox(tk.Frame):
     self.reset_color()
     
     #color value widgets
-    rbox = Spinbox(self,
+    self.rbox = Spinbox(self,
       bd = 3,
       from_=0, to=31,
       width=8,
       textvariable=self.values['r'],
       command=self.update_color,
       fg = "red")
-    gbox = Spinbox(self,
+    self.gbox = Spinbox(self,
       bd = 3,
       width=8,
       from_=0, to=31,
       textvariable=self.values['g'],
       command=self.update_color,
       fg = "green")
-    bbox = Spinbox(self,
+    self.bbox = Spinbox(self,
       bd = 3,
       width=8,
       from_=0, to=31,
       textvariable=self.values['b'],
       command=self.update_color,
       fg = "blue")
-    rbox.grid(column=1,row=0)
-    gbox.grid(column=2,row=0)
-    bbox.grid(column=3,row=0)
+    self.rbox.grid(column=1,row=0)
+    self.gbox.grid(column=2,row=0)
+    self.bbox.grid(column=3,row=0)
+    
     #text box for colors
     notes = tk.Entry(self, 
       textvariable = self.values['notes']
@@ -122,6 +126,14 @@ class ColorBox(tk.Frame):
       command=self.reset_color,
       text='reset')
     reset.grid(column=4,row=0)
+    
+    self.obox = Spinbox(self,
+      bd=3,
+      width = 4,
+      from_=0, to=256,
+      textvariable = self.values['cid']
+      )
+    self.obox.grid(column=4,row=1)
     
   def update_color(self):
     '''update canvas color'''
@@ -426,7 +438,9 @@ class App:
       #remove any previous color boxes
       for cf in self.cfl:
         cf.destroy()
-      cfs = [None] * len(self.sourcepal.colors)
+      self.cfl = []
+      psize = len(self.sourcepal.colors)
+      cfs = [None] * psize
       for (x,c) in enumerate(self.sourcepal.colors):
         c.r = PD.TOGBA(c.r)
         c.g = PD.TOGBA(c.g)
@@ -438,6 +452,10 @@ class App:
           width=self.frames['palbox']['width']
           )
         f.grid(row=x,column=0)
+        f.obox.configure(
+          to=psize-1,
+          command=lambda x=f: self.move_color(x))
+        
         cfs[x] = f
       self.cfl = cfs
       # update color widgets in 'palette' frame
@@ -484,7 +502,7 @@ class App:
     for x in range(n):
       cf = self.cfl[x]
       c = cf.get_color()
-      newpal.edit_color(cf.pin,c)
+      newpal.edit_color(cf.values['cid'].get(),c)
     newpal.to_gba_hex()
     return newpal
     
@@ -496,7 +514,7 @@ class App:
     if cf:
       c = cf.get_color()
       c = tuple(PD.FROMGBA(n) for n in c)
-      self.dispal.edit_color(cf.pin,c)
+      self.dispal.edit_color(cf.values['cid'].get(),c)
     newpal = self.dispal.flatten()
     # else:
       # newpal = self.grab_pal().flatten()
@@ -515,13 +533,69 @@ class App:
     for cf in self.cfl:
       c = cf.get_color()
       c = tuple(PD.FROMGBA(n) for n in c)
-      self.dispal.edit_color(cf.pin,c)
+      self.dispal.edit_color(cf.values['cid'].get(),c)
   
   def reset_colors(self):
     '''reset every color frame then update the display'''
     
     for cf in self.cfl:
       cf.reset_color(False)
+    self.update_palette()
+    self.update_image()
+  
+  def move_color(self,cf):
+    #do nothing if no color frames
+    if not self.cfl: return
+    clist = self.cfl.copy()
+    #sort color frames by color index
+    clist.sort(key=lambda x: x.values['cid'].get())
+    x = clist.index(cf)
+    #remove item from list
+    clist.pop(x)
+    #move item to place in list
+    clist.insert(cf.values['cid'].get(),cf)
+    #reorder color index for color frames
+    for x,c in enumerate(clist): c.values['cid'].set(x)
+    
+  
+    old = {}
+    lenpal = len(self.sourcepal.colors)
+    #map old color id to color rgb
+    for c in range(lenpal):
+      z = self.dispal.get_color(c).flatten()
+      z = tuple(PD.TOGBA(x) for x in z)
+      old[c] = z
+    
+    #build second dict from color frames
+    new = {}
+    #map color rgb to color id
+    for cf in self.cfl:
+      new[cf.ocrgb] = cf.values['cid'].get()
+    order = {}
+    
+    newpal = PD.Palette(length=lenpal)
+    # map old to new
+    for c in range(lenpal):
+      p = old[c]
+      order[c] = new[p]
+      #reorder source palette
+      pz = self.sourcepal.get_color(c)
+      newpal.edit_color(new[p],pz)
+    
+    #do nothing if new and old order are the same
+    if all(x == order[x] for x in order):
+      return
+    
+    #cycle through image to fix color order
+    d = self.sourceimg.getdata()
+    w = self.sourceimg.width
+    h = self.sourceimg.height
+    nid = [0] * (w*h)
+    for p in range(w*h):
+      nid[p] = order[d[p]]
+    self.sourceimg.putdata(nid)
+    self.sourcepal = newpal
+    self.sourceimg.putpalette(newpal.flatten())
     self.update_palette()
     self.update_image()
   
@@ -568,7 +642,7 @@ class App:
         pal = PD.Palette.from_gba_hex(paste)
         #use pasted hex to build display palette
         for cf in self.cfl:
-          c = pal.get_color(cf.pin)
+          c = pal.get_color(cf.values['cid'].get())
           cf.set_color(c.flatten(),False)
         #update display palette:
         for p in pal.colors:
