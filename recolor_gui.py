@@ -28,6 +28,7 @@ def isValidFile(file):
 	return file.is_file()
 
 def ishex(h):
+  '''check if h is valid hexadecimal'''
   s1 = set(h.lower().removeprefix('0x'))
   s2 = set('0123456789abcdef')
   if s1 < s2:
@@ -125,6 +126,7 @@ class ColorBox(tk.Frame):
     reset.grid(column=4,row=0)
     
   def update_color(self):
+    '''update canvas color'''
     r = PD.FROMGBA(self.values['r'].get())
     g = PD.FROMGBA(self.values['g'].get())
     b = PD.FROMGBA(self.values['b'].get())
@@ -133,18 +135,24 @@ class ColorBox(tk.Frame):
     if self.update: self.update(self)
   
   def reset_color(self,redraw=True):
+    '''set color back to source color'''
     self.values['r'].set(self.ocrgb[PD.R])
     self.values['g'].set(self.ocrgb[PD.G])
     self.values['b'].set(self.ocrgb[PD.B])
     if redraw: self.update_color()
     
   def get_color(self):
+    '''return color as rgb tuple'''
     r = self.values['r'].get()
     g = self.values['g'].get()
     b = self.values['b'].get()
     return (r,g,b)
   
   def set_color(self,c,redraw=True):
+    '''set color to given value
+    :param c: rgb tuple
+    :param redraw: if true, call update canvas
+    '''
     self.values['r'].set(c[PD.R])
     self.values['g'].set(c[PD.G])
     self.values['b'].set(c[PD.B])
@@ -160,6 +168,7 @@ class Spinbox(tk.Spinbox):
     self.bind('<Button-5>', self._mousewheel)
     
   def _mousewheel(self,event):
+    '''handles scrolling to change value'''
     if event.num == 5 or event.delta == -120:
       self.invoke('buttondown')
     elif event.num == 4 or event.delta == 120:
@@ -217,7 +226,8 @@ class ScrollFrame(tk.Frame):
     self.canvas.unbind("<MouseWheel>")
 
 class ToolTip(object):
-	'''create a tooltip for a given widget'''
+	'''create a tooltip:
+  produces hover text when over given object'''
 	def __init__(self, widget):
 		self.widget = widget
 		self.tipwindow = None
@@ -225,7 +235,7 @@ class ToolTip(object):
 		self.x = self.y = 0
 
 	def showtip(self, text):
-		"Display text in tooltip window"
+		'''Display text in tooltip window'''
 		self.text = text
 		if self.tipwindow or not self.text:
 			return
@@ -241,6 +251,7 @@ class ToolTip(object):
 		label.pack(ipadx=1)
 
 	def hidetip(self):
+		'''remove tooltip window text'''
 		tw = self.tipwindow
 		self.tipwindow = None
 		if tw:
@@ -262,42 +273,40 @@ class App:
     self.root.geometry('900x600')
     self._build_ui()
     self.root.mainloop()
-    self.colors = []
   
   def _build_ui(self):
+    ''' build the gui'''
+    
+    # hold any frame could be referenced later
     self.frames = {}
+   
+   # hold any widgets could be referenced later
     self.widgets = {}
+    
+    # hold all tk variables
     self.values = {} #dict for tk variables
+    
+    # the image to be formatted for the display
     self.sourceimg = None
+   
+   # the source image's orignal palette
     self.sourcepal = None
+    
+    # formatted image for the display
     self.showimg = None
+    
+    # showimg as canvas object
     self.disimg = None
+    
+    # palette for formatted image
     self.dispal = None
+    
+    # list of color frames
     self.cfl = []
+    
     mainframe = tk.Frame(self.root)
     self.frames["mainframe"] = mainframe
     mainframe.pack()
-    
-    '''
-    buttons to make:
-    [ ]cycle through palette groups
-    [ ]cycle through palettes in current palette group
-    [ ]export all palette groups as EA file
-    [ ]add new palette
-    [ ]delete current palette
-    [ ]add new palette group
-    [ ]delete current palette group
-    [ ]export current palette group as bin file
-    [+]select image for current palette group
-    [+]write label for palette group
-    [+]write note for palette
-    [ ]write note for color
-    [+]reset color
-    [ ]reset all colors in palette
-    [ ]way to add in the stuff like set{} and ids
-    [ ]consider way to add in comments
-    [ ]zoom for display image
-    '''
     
     #image display area
     imgbox = tk.Frame(mainframe)
@@ -399,6 +408,7 @@ class App:
     
   def change_image(self):
     '''change the displayed image'''
+    
     newimgpath = askForFileIn((('png','*.png'),))
     if isValidFile(newimgpath):
       self.sourceimg = Image.open(newimgpath)
@@ -446,6 +456,7 @@ class App:
   def index_image(self):
     '''convert sourceimg to palette mode'''
     #TODO: build new image using given palette
+    
     if self.sourceimg.mode == 'P':
       return
     if self.sourceimg.mode not in ('RGB','RGBA'):
@@ -480,6 +491,7 @@ class App:
     return newpal
     
   def update_image(self,cf = None):
+    
     # do nothing if no image
     if not self.sourceimg: return
     
@@ -508,12 +520,16 @@ class App:
       self.dispal.edit_color(cf.pin,c)
   
   def reset_colors(self):
+    '''reset every color frame then update the display'''
+    
     for cf in self.cfl:
       cf.reset_color(False)
     self.update_palette()
     self.update_image()
   
   def zoomed_image(self):
+    '''returned zoomed version of source image'''
+    
     z = self.values['zoom'].get()
     newimg = self.sourceimg.copy()
     newimg.putpalette(self.dispal.flatten())
@@ -524,6 +540,9 @@ class App:
     return newimg
   
   def clip_hex(self):
+    '''copy palette to clipboard'''
+    
+    # do nothing if no color frames exist
     if not self.cfl: return
     
     self.root.clipboard_clear()
@@ -536,11 +555,16 @@ class App:
       message = palclip)
   
   def paste_hex(self):
+    '''copy from palette clipboard'''
+    
+    # do nothing if no color frames exist
     if not self.cfl: return
+    
     try:
       paste = self.root.clipboard_get()
     except tk.clError:
       paste = ''
+    
     if paste and ishex(paste): 
       if self.cfl:
         pal = PD.Palette.from_gba_hex(paste)
@@ -595,3 +619,27 @@ if __name__ == '__main__':
   reorder index
     
   """
+'''
+    to do list:
+    [ ]cycle through palette groups
+    [ ]cycle through palettes in current palette group
+    [ ]export all palette groups as EA file
+    [ ]add new palette
+    [ ]delete current palette
+    [ ]add new palette group
+    [ ]delete current palette group
+    [ ]export current palette group as bin file
+    [+]select image for current palette group
+    [+]write label for palette group
+    [+]write note for palette
+    [ ]write note for color
+    [+]reset color
+    [+]reset all colors in palette
+    [ ]way to add in the stuff like set{} and ids
+    [ ]consider way to add in comments
+    [+]zoom for display image
+    [ ]save to toml
+    [ ]load from toml
+    [ ]reorder colors in palette
+'''
+
