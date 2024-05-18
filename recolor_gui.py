@@ -117,7 +117,6 @@ class ColorBox(tk.Frame):
     reset.grid(column=4,row=0)
     
   def update_color(self):
-    # print('update')
     r = PD.FROMGBA(self.values['r'].get())
     g = PD.FROMGBA(self.values['g'].get())
     b = PD.FROMGBA(self.values['b'].get())
@@ -126,7 +125,6 @@ class ColorBox(tk.Frame):
     if self.update: self.update(self)
   
   def reset_color(self,redraw=True):
-    # print('reset')
     self.values['r'].set(self.ocrgb[PD.R])
     self.values['g'].set(self.ocrgb[PD.G])
     self.values['b'].set(self.ocrgb[PD.B])
@@ -513,14 +511,12 @@ class App:
     
     self.root.clipboard_clear()
     pal = self.grab_pal()
-    print(pal)
     palclip = pal.to_gba_hex()
     self.root.clipboard_append(palclip)
     self.root.update()
     prompt = messagebox.showinfo(
       title = 'Copied to Clipboard',
       message = palclip)
-    print(pal.flatten())
   
 
 
