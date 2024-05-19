@@ -118,6 +118,20 @@ class ColorBox(tk.Frame):
     self.gbox.grid(column=2,row=0)
     self.bbox.grid(column=3,row=0)
     
+    # event binding for updating
+    # after typing new value
+    self.rbox.bind('<FocusOut>',
+      lambda event:self.update_color())
+    self.rbox.bind('<Return>',
+      lambda event:self.update_color())
+    self.gbox.bind('<FocusOut>',
+      lambda event:self.update_color())
+    self.gbox.bind('<Return>',
+      lambda event:self.update_color())
+    self.bbox.bind('<FocusOut>',
+      lambda event:self.update_color())
+    self.bbox.bind('<Return>',
+      lambda event:self.update_color())
     #text box for colors
     notes = tk.Entry(self, 
       textvariable = self.values['notes']
@@ -173,6 +187,7 @@ class Spinbox(tk.Spinbox):
   '''Spinbox, but with scrolling to change values'''
   def __init__(self,parent,*args,**kwargs):
     super().__init__(parent, *args, **kwargs)
+    # bind event for scrolling
     self.bind('<MouseWheel>', self._mousewheel)
     self.bind('<Button-4>', self._mousewheel)
     self.bind('<Button-5>', self._mousewheel)
@@ -452,9 +467,16 @@ class App:
           width=self.frames['palbox']['width']
           )
         f.grid(row=x,column=0)
+        
+        # attach update function
         f.obox.configure(
           to=psize-1,
           command=lambda x=f: self.move_color(x))
+        
+        f.obox.bind("<FocusOut>",
+          lambda event,x=f: self.move_color(x))
+        f.obox.bind("<Return>",
+          lambda event,x=f: self.move_color(x))
         
         cfs[x] = f
       self.cfl = cfs
