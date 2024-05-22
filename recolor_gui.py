@@ -318,10 +318,12 @@ class App:
     self.sourcepal = None
     
     # formatted image for the display
-    self.showimg = None
-    
-    # showimg as canvas object
+    self.altimg = None
+    # altimg as PhotoImage
     self.disimg = None
+    
+    # disimg as canvas object
+    self.showimg = None
     
     # palette for formatted image
     self.dispal = None
@@ -440,9 +442,10 @@ class App:
       #convert image to palette mode
       self.index_image()
       #get original palette
-      self.showimg = ImageTk.PhotoImage(
+      self.altimg = self.sourceimg.copy()
+      self.disimg = ImageTk.PhotoImage(
         # file=newimgpath)
-        image=self.sourceimg)
+        image=self.altimg)
       # do palette stuff here
       self.sourcepal = PD.Palette(
         flat=self.sourceimg.getpalette())
@@ -483,9 +486,9 @@ class App:
       # update color widgets in 'palette' frame
       # update source palette
       display = self.widgets['displayimg']
-      self.disimg = display.create_image(
+      self.showimg = display.create_image(
         (5,5),
-        image=self.showimg
+        image=self.disimg
         )
       display.config(
         scrollregion=display.bbox(tk.ALL))
@@ -543,11 +546,11 @@ class App:
       # newpal = tuple(FROMGBA(n) for n in newpal)
     newimg = self.zoomed_image()
     newimg.putpalette(newpal)
-    self.showimg = ImageTk.PhotoImage(
+    self.disimg = ImageTk.PhotoImage(
       image=newimg)
     display = self.widgets['displayimg']
     display.itemconfig(
-      self.disimg,image=self.showimg)
+      self.showimg,image=self.disimg)
     display.configure(
       scrollregion=display.bbox(tk.ALL))
   
@@ -584,8 +587,7 @@ class App:
     lenpal = len(self.sourcepal.colors)
     #map old color id to color rgb
     for c in range(lenpal):
-      z = self.dispal.get_color(c).flatten()
-      z = tuple(PD.TOGBA(x) for x in z)
+      z = self.sourcepal.get_color(c).flatten()
       old[c] = z
     
     #build second dict from color frames
@@ -615,9 +617,8 @@ class App:
     nid = [0] * (w*h)
     for p in range(w*h):
       nid[p] = order[d[p]]
-    self.sourceimg.putdata(nid)
-    self.sourcepal = newpal
-    self.sourceimg.putpalette(newpal.flatten())
+    
+    self.altimg.putdata(nid)
     self.update_palette()
     self.update_image()
   
@@ -625,7 +626,7 @@ class App:
     '''returned zoomed version of source image'''
     
     z = self.values['zoom'].get()
-    newimg = self.sourceimg.copy()
+    newimg = self.altimg.copy()
     newimg.putpalette(self.dispal.flatten())
     if z > 0:
       w = newimg.width * z
@@ -734,6 +735,6 @@ if __name__ == '__main__':
     [+]zoom for display image
     [ ]save to toml
     [ ]load from toml
-    [ ]reorder colors in palette
+    [+]reorder colors in palette
 '''
 
