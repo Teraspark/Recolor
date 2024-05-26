@@ -571,6 +571,13 @@ class App:
   def move_color(self,cf):
     #do nothing if no color frames
     if not self.cfl: return
+    
+    #fix if input is out of range
+    c = cf.values['cid']
+    if c.get() < 0: c.set(0)
+    elif c.get() >= len(self.cfl):
+      c.set(len(self.cfl)-1)
+    
     clist = self.cfl.copy()
     #sort color frames by color index
     clist.sort(key=lambda x: x.values['cid'].get())
@@ -606,17 +613,18 @@ class App:
       pz = self.sourcepal.get_color(c)
       newpal.edit_color(new[p],pz)
     
-    #do nothing if new and old order are the same
+    # if new and old order are the same,
+    # copy source image instead of rebuilding
     if all(x == order[x] for x in order):
-      return
-    
-    #cycle through image to fix color order
-    d = self.sourceimg.getdata()
-    w = self.sourceimg.width
-    h = self.sourceimg.height
-    nid = [0] * (w*h)
-    for p in range(w*h):
-      nid[p] = order[d[p]]
+      nid = self.sourceimg.getdata()
+    else:
+      #cycle through image to fix color order
+      d = self.sourceimg.getdata()
+      w = self.sourceimg.width
+      h = self.sourceimg.height
+      nid = [0] * (w*h)
+      for p in range(w*h):
+        nid[p] = order[d[p]]
     
     self.altimg.putdata(nid)
     self.update_palette()
