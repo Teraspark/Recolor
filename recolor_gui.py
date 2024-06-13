@@ -57,7 +57,7 @@ class palstruct():
   def curgroup(self):
     return self.data['palg'][gindex]
 
-class ColorBox(tk.Frame):
+class Colorbox(tk.Frame):
   '''set of widgets made for the rgb section'''
   def __init__(self,parent,src,id,update=None,*args,**kwargs):
     '''
@@ -140,17 +140,7 @@ class ColorBox(tk.Frame):
     self.bbox.bind('<Return>',
       lambda event:self.update_color())
     
-    # description box for colors
-    self.notes = tk.Entry(self, 
-      textvariable = self.values['notes']
-      )
-    self.notes.grid(
-      column = 3,
-      row = 1,
-      columnspan = 2
-      )
-    
-    self.rgbtext = tk.Entry(self,
+    self.rgbtext = tkx.EntryEx(self,
       width = 12,
       state = 'readonly',
       textvariable = self.values['ctext']
@@ -161,6 +151,16 @@ class ColorBox(tk.Frame):
       command=self.reset_color,
       text='reset')
     reset.grid(column=5,row=0)
+    
+    # description box for colors
+    self.notes = tkx.EntryEx(self, 
+      textvariable = self.values['notes']
+      )
+    self.notes.grid(
+      column = 3,
+      row = 1,
+      columnspan = 2
+      )
     
     self.obox = tkx.Spinbox2(self,
       bd=3,
@@ -382,7 +382,7 @@ class App:
         c.r = PD.TOGBA(c.r)
         c.g = PD.TOGBA(c.g)
         c.b = PD.TOGBA(c.b)
-        f = ColorBox(
+        f = Colorbox(
           self.frames['palette'].casing,
           c.flatten(),x,self.update_image)
         f.config(
