@@ -665,7 +665,7 @@ class App:
     
     try:
       paste = self.root.clipboard_get()
-    except tk.clError:
+    except tk.TclError:
       paste = ''
     
     if paste and ishex(paste): 
