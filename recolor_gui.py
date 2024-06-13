@@ -70,11 +70,17 @@ class ColorBox(tk.Frame):
     # self.pin = id #palette index
     self.update = update
     self.values = {}
-    self.values['r']=tk.IntVar()
-    self.values['g']=tk.IntVar()
-    self.values['b']=tk.IntVar()
+    # red
+    self.values['r'] = tk.IntVar()
+    # green
+    self.values['g'] = tk.IntVar()
+    # blue
+    self.values['b'] = tk.IntVar()
+    # color index in palette
     self.values['index'] = tk.IntVar()
+    # description of what the color is for
     self.values['notes'] = tk.StringVar()
+    # rgb converted back to 24 bit color
     self.values['ctext'] = tk.StringVar()
     
     # palette color id
@@ -133,14 +139,28 @@ class ColorBox(tk.Frame):
       lambda event:self.update_color())
     self.bbox.bind('<Return>',
       lambda event:self.update_color())
-    #text box for colors
-    notes = tk.Entry(self, 
+    
+    # description box for colors
+    self.notes = tk.Entry(self, 
       textvariable = self.values['notes']
       )
+    self.notes.grid(
+      column = 3,
+      row = 1,
+      columnspan = 2
+      )
+    
+    self.rgbtext = tk.Entry(self,
+      width = 12,
+      state = 'readonly',
+      textvariable = self.values['ctext']
+      )
+    self.rgbtext.grid(column = 4,row = 0)
+    
     reset = tk.Button(self,
       command=self.reset_color,
       text='reset')
-    reset.grid(column=4,row=0)
+    reset.grid(column=5,row=0)
     
     self.obox = tkx.Spinbox2(self,
       bd=3,
@@ -148,7 +168,7 @@ class ColorBox(tk.Frame):
       from_=0, to=256,
       textvariable = self.values['cid']
       )
-    self.obox.grid(column=4,row=1)
+    self.obox.grid(column=5,row=1)
     
   def update_color(self):
     '''update canvas color'''
@@ -157,6 +177,8 @@ class ColorBox(tk.Frame):
     b = PD.FROMGBA(self.values['b'].get())
     c = '#%02x%02x%02x' % (r,g,b)
     self.ncbox.configure(bg = c)
+    c = ','.join(str(x) for x in (r,g,b))
+    self.values['ctext'].set(c)
     if self.update: self.update(self)
   
   def reset_color(self,redraw=True):
@@ -164,7 +186,12 @@ class ColorBox(tk.Frame):
     self.values['r'].set(self.ocrgb[PD.R])
     self.values['g'].set(self.ocrgb[PD.G])
     self.values['b'].set(self.ocrgb[PD.B])
-    if redraw: self.update_color()
+    if redraw:
+      self.update_color()
+    else:
+      c = ','.join(
+        str(PD.FROMGBA(x)) for x in self.ocrgb)
+      self.values['ctext'].set(c)
     
   def get_color(self):
     '''return color as rgb tuple'''
