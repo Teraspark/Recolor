@@ -6,6 +6,7 @@ from tkinter.filedialog import asksaveasfilename
 from tkinter import messagebox
 import xml.etree.ElementTree as ET
 
+import tkextras as tkx
 from PIL import Image,ImageTk
 import palette as PD
 
@@ -93,21 +94,21 @@ class ColorBox(tk.Frame):
     self.reset_color()
     
     #color value widgets
-    self.rbox = Spinbox(self,
+    self.rbox = tkx.Spinbox2(self,
       bd = 3,
       from_=0, to=31,
       width=8,
       textvariable=self.values['r'],
       command=self.update_color,
       fg = "red")
-    self.gbox = Spinbox(self,
+    self.gbox = tkx.Spinbox2(self,
       bd = 3,
       width=8,
       from_=0, to=31,
       textvariable=self.values['g'],
       command=self.update_color,
       fg = "green")
-    self.bbox = Spinbox(self,
+    self.bbox = tkx.Spinbox2(self,
       bd = 3,
       width=8,
       from_=0, to=31,
@@ -141,7 +142,7 @@ class ColorBox(tk.Frame):
       text='reset')
     reset.grid(column=4,row=0)
     
-    self.obox = Spinbox(self,
+    self.obox = tkx.Spinbox2(self,
       bd=3,
       width = 4,
       from_=0, to=256,
@@ -182,115 +183,6 @@ class ColorBox(tk.Frame):
     self.values['b'].set(c[PD.B])
     if redraw: self.update_color()
     
-    
-class Spinbox(tk.Spinbox):
-  '''Spinbox, but with scrolling to change values'''
-  def __init__(self,parent,*args,**kwargs):
-    super().__init__(parent, *args, **kwargs)
-    # bind event for scrolling
-    self.bind('<MouseWheel>', self._mousewheel)
-    self.bind('<Button-4>', self._mousewheel)
-    self.bind('<Button-5>', self._mousewheel)
-    
-  def _mousewheel(self,event):
-    '''handles scrolling to change value'''
-    if event.num == 5 or event.delta == -120:
-      self.invoke('buttondown')
-    elif event.num == 4 or event.delta == 120:
-      self.invoke('buttonup')
-    
-class ScrollFrame(tk.Frame):
-  '''made to contain other widgets'''
-  def __init__(self,parent,*args,**kwargs):
-    super().__init__(parent, *args, **kwargs)
-    
-    self.canvas = tk.Canvas(self)
-    self.casing = tk.Frame(self.canvas)
-    
-    self.sbary = tk.Scrollbar(self, width=20,
-      orient=tk.VERTICAL,
-      command = self.canvas.yview)
-    self.canvas['yscrollcommand']=self.sbary.set
-    self.canvas.grid(column=0,
-      row=0,sticky=(tk.N,tk.W,tk.S,tk.E))
-    self.sbary.grid(column=1,
-      row=0,sticky=(tk.N,tk.S))
-    
-    self.canvas_window = \
-      self.canvas.create_window((4,4),
-      anchor='nw',
-      window = self.casing,
-      tags="self.casing")
-    self.casing.bind(
-      "<Configure>",self._configurecasing)
-    self.canvas.bind(
-      "<Configure>",self._configurecanvas)
-    
-    self.casing.bind("<Enter>",self._enter)
-    self.casing.bind("<Leave>",self._leave)
-    
-  def _configurecasing(self,event):
-    '''Adjust scroll region to match casing'''
-    self.canvas.configure(
-      scrollregion=self.canvas.bbox("all"))
-  def _configurecanvas(self,event):
-    '''Adjust canvas window to match casing'''
-    self.canvas.itemconfig(self.canvas_window,
-      width = event.width)
-  def _mousewheel(self,event):
-    '''scroll wheel event'''
-    self.canvas.yview_scroll(
-      int(-1*(event.delta/120)),"units")
-    
-  def _enter(self,event):
-    '''bind wheel events when the cursor enters'''
-    self.canvas.bind(
-      "<MouseWheel>",self._mousewheel)
-  def _leave(self,event):
-    '''unbind wheel events when the cursorl leaves'''
-    self.canvas.unbind("<MouseWheel>")
-
-class ToolTip(object):
-	'''create a tooltip:
-  produces hover text when over given object'''
-	def __init__(self, widget):
-		self.widget = widget
-		self.tipwindow = None
-		self.id = None
-		self.x = self.y = 0
-
-	def showtip(self, text):
-		'''Display text in tooltip window'''
-		self.text = text
-		if self.tipwindow or not self.text:
-			return
-		x, y, cx, cy = self.widget.bbox("insert")
-		x = x + self.widget.winfo_rootx() + 57
-		y = y + cy + self.widget.winfo_rooty() +27
-		self.tipwindow = tw = tk.Toplevel(self.widget)
-		tw.wm_overrideredirect(1)
-		tw.wm_geometry("+%d+%d" % (x, y))
-		label = tk.Label(tw, text=self.text, justify=tk.LEFT,
-					  background="#ffffe0", relief=tk.SOLID, borderwidth=1,
-					  font=("tahoma", "8", "normal"))
-		label.pack(ipadx=1)
-
-	def hidetip(self):
-		'''remove tooltip window text'''
-		tw = self.tipwindow
-		self.tipwindow = None
-		if tw:
-			tw.destroy()
-
-def CreateToolTip(widget, text):
-	toolTip = ToolTip(widget)
-	def enter(event):
-		toolTip.showtip(text)
-	def leave(event):
-		toolTip.hidetip()
-	widget.bind('<Enter>', enter)
-	widget.bind('<Leave>', leave)
-
 class App:
   def __init__(self,title="Python GUI"):
     self.root = tk.Tk()
@@ -372,7 +264,7 @@ class App:
       rowspan=8,padx=2,
       sticky=(tk.N,tk.W,tk.S,tk.E))
     self.frames['palbox'] = palbox
-    self.frames['palette'] = ScrollFrame(palbox,padx=10)
+    self.frames['palette'] = tkx.ScrollFrame(palbox,padx=10)
     buttres = tk.Button(palbox, 
       command = self.reset_colors,
       text = "Reset All")
@@ -390,9 +282,9 @@ class App:
     self.frames['palette'].grid(row=1,rowspan=3,
       column=0, columnspan=5,
       sticky=(tk.W,tk.E))
-    CreateToolTip(buttimp,
+    tkx.CreateToolTip(buttimp,
       'import palette from clipboard')
-    CreateToolTip(buttexp,
+    tkx.CreateToolTip(buttexp,
       'export palette to clipboard as hexadecimal')
     # self.frames['palette']['borderwidth']=3
     # self.frames['palette']['relief']=tk.RIDGE
@@ -412,7 +304,7 @@ class App:
     self.values['zoom'] = tk.IntVar()
     zoomlabel = tk.Label(mainframe,text='Zoom')
     zoomlabel.grid(row=5,column=0,sticky=tk.W)
-    zoombox = Spinbox(mainframe,
+    zoombox = tkx.Spinbox2(mainframe,
       textvariable=self.values['zoom'],
       command = self.update_image,
       width = 8,
@@ -423,7 +315,7 @@ class App:
       text = 'LZSS',
       variable= self.values['lzss'])
     compcheck.grid(row=5,column=2)
-    CreateToolTip(compcheck,
+    tkx.CreateToolTip(compcheck,
       'use lzss compression on this group of palettes')
     
   def _build_menu(self):
