@@ -30,7 +30,7 @@ def ishex(h):
   '''check if h is valid hexadecimal'''
   s1 = set(h.lower().removeprefix('0x'))
   s2 = set('0123456789abcdef')
-  if s1 < s2:
+  if s1 <= s2:
     return True
   else:
     return False
@@ -593,7 +593,7 @@ class App:
         #use pasted hex to build display palette
         for cf in self.cfl:
           c = pal.get_color(cf.values['cid'].get())
-          cf.set_color(c.flatten(),False)
+          cf.set_color(c.flatten(),True)
         #update display palette:
         for p in pal.colors:
           p.r = PD.FROMGBA(p.r)
