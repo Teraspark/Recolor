@@ -33,10 +33,10 @@ class ScrollFrame(tk.Frame):
       orient=tk.VERTICAL,
       command = self.canvas.yview)
     self.canvas['yscrollcommand']=self.sbary.set
-    self.canvas.grid(column=0,
-      row=0,sticky=(tk.N,tk.W,tk.S,tk.E))
-    self.sbary.grid(column=1,
-      row=0,sticky=(tk.N,tk.S))
+    self.canvas.pack(side = tk.LEFT,
+      fill = tk.BOTH,
+      expand = True)
+    self.sbary.pack(side = tk.LEFT,fill=tk.Y)
     
     self.canvas_window = \
       self.canvas.create_window((4,4),
