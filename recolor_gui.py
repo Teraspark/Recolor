@@ -59,15 +59,15 @@ class palstruct():
 
 class Colorbox(tk.Frame):
   '''set of widgets made for the rgb section'''
-  def __init__(self,parent,src,id,update=None,*args,**kwargs):
+  def __init__(self, parent, src, id, update = None, *args, **kwargs):
     '''
     :param parent: parent widget
     :param src: source color (tuple)
     :param id: int color number in palette
     '''
     super().__init__(parent, *args, **kwargs)
-    self.ocrgb = src #hold original color
-    # self.pin = id #palette index
+    self.ocrgb = src # hold original color
+    # self.pin = id # palette index
     self.update = update
     self.values = {}
     # red
@@ -84,7 +84,7 @@ class Colorbox(tk.Frame):
     self.values['ctext'] = tk.StringVar()
     
     # palette color id
-    self.values['cid'] = tk.IntVar(value=id)
+    self.values['cid'] = tk.IntVar(value = id)
     
     # source color
     src = tuple(PD.FROMGBA(c) for c in src)
@@ -95,35 +95,50 @@ class Colorbox(tk.Frame):
     self.ncbox = tk.Canvas(self,
       width = 16, height = 16)
     
-    self.ocbox.grid(column=1,row=1)
-    self.ncbox.grid(column=2,row=1)
+    self.ocbox.grid(column = 1, row = 0)
+    self.ncbox.grid(column = 2, row = 0)
     self.reset_color()
+    
+    # description box for colors
+    self.notes = tkx.EntryEx(self, 
+      textvariable = self.values['notes']
+      )
+    self.notes.grid(
+      column = 3,
+      row = 0,
+      columnspan = 2
+      )
+    
+    reset = tk.Button(self,
+      command = self.reset_color,
+      text = 'reset')
+    reset.grid(column = 5, row = 0)
     
     #color value widgets
     self.rbox = tkx.Spinbox2(self,
       bd = 3,
-      from_=0, to=31,
-      width=8,
+      from_ = 0, to = 31,
+      width = 8,
       textvariable=self.values['r'],
       command=self.update_color,
       fg = "red")
     self.gbox = tkx.Spinbox2(self,
       bd = 3,
-      width=8,
-      from_=0, to=31,
-      textvariable=self.values['g'],
-      command=self.update_color,
+      width = 8,
+      from_ = 0, to = 31,
+      textvariable = self.values['g'],
+      command = self.update_color,
       fg = "green")
     self.bbox = tkx.Spinbox2(self,
       bd = 3,
       width=8,
       from_=0, to=31,
       textvariable=self.values['b'],
-      command=self.update_color,
+      command = self.update_color,
       fg = "blue")
-    self.rbox.grid(column=1,row=0)
-    self.gbox.grid(column=2,row=0)
-    self.bbox.grid(column=3,row=0)
+    self.rbox.grid(column = 1 , row = 1)
+    self.gbox.grid(column = 2 , row = 1)
+    self.bbox.grid(column = 3 , row = 1)
     
     # event binding for updating
     # after typing new value
@@ -145,30 +160,15 @@ class Colorbox(tk.Frame):
       state = 'readonly',
       textvariable = self.values['ctext']
       )
-    self.rgbtext.grid(column = 4,row = 0)
-    
-    reset = tk.Button(self,
-      command=self.reset_color,
-      text='reset')
-    reset.grid(column=5,row=0)
-    
-    # description box for colors
-    self.notes = tkx.EntryEx(self, 
-      textvariable = self.values['notes']
-      )
-    self.notes.grid(
-      column = 3,
-      row = 1,
-      columnspan = 2
-      )
+    self.rgbtext.grid(column = 4, row = 1)
     
     self.obox = tkx.Spinbox2(self,
-      bd=3,
+      bd = 3,
       width = 4,
-      from_=0, to=256,
+      from_ = 0, to = 256,
       textvariable = self.values['cid']
       )
-    self.obox.grid(column=5,row=1)
+    self.obox.grid(column = 5, row = 1)
     
   def update_color(self):
     '''update canvas color'''
@@ -387,9 +387,11 @@ class App:
           self.frames['palette'].casing,
           c.flatten(),x,self.update_image)
         f.config(
-          width=self.frames['palbox']['width']
+          width=self.frames['palbox']['width'],
+          borderwidth = 2, relief = tk.RIDGE
           )
-        f.grid(row=x,column=0)
+        f.grid(row = x, column = 0,
+          padx = (5,0))
         
         # attach update function
         f.obox.configure(
