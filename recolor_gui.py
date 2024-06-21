@@ -214,7 +214,8 @@ class App:
   def __init__(self,title="Python GUI"):
     self.root = tk.Tk()
     self.root.title(title)
-    self.root.geometry('900x600')
+    self.root.geometry('900x900')
+    self.root.minsize(900,400)
     self._build_ui()
     self.root.mainloop()
   
