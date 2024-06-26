@@ -253,13 +253,61 @@ class App:
     
     mainframe = tk.Frame(self.root)
     self.frames["mainframe"] = mainframe
-    mainframe.pack()
+    mainframe.pack(fill = tk.BOTH, expand = True)
+    
+    mainframe.columnconfigure(0, weight = 1)
+    mainframe.columnconfigure(1, weight = 1)
+    
+    mainframe.rowconfigure(0, weight = 9)
+    # mainframe.rowconfigure(2, weight = 1)
     
     #image display area
     imgbox = tk.Frame(mainframe)
-    imgbox.grid(row=0,column=0,columnspan = 4,
-      rowspan = 3,)
+    imgbox.grid(row=0,column=0,
+      pady = 5, padx = (5,0),
+      sticky = (tk.N,tk.S,tk.W,tk.E))
     self.frames['imgbox'] = imgbox
+    
+    # imgbox.rowconfigure(0,weight=3)
+    imgbox.rowconfigure(2,weight=7)
+    
+    imgbox.columnconfigure(1,weight=1)
+    
+    optionsbox = tk.Frame(imgbox)
+    optionsbox.grid(row=0,column=1,columnspan=3,
+      pady=5,
+      sticky=tk.N)
+    self.frames['options'] = optionsbox
+    
+    #buttons
+    groupnametext = tk.Label(optionsbox,text="Name")
+    groupnametext.grid(row=3,column=0,sticky=tk.W)
+    self.values['grouplabel'] = tk.StringVar()
+    groupname = tk.Entry(optionsbox,
+      textvariable=self.values['grouplabel'])
+    groupname.grid(row=3,column=1,sticky=(tk.W,tk.E))
+    groupbutton1 = tk.Button(optionsbox,text="Add")
+    groupbutton2 = tk.Button(optionsbox,text="Remove")
+    groupbutton1.grid(row=3,column=2)
+    groupbutton2.grid(row=3,column=3)
+    
+    self.values['zoom'] = tk.IntVar()
+    zoomlabel = tk.Label(optionsbox,text='Zoom')
+    zoomlabel.grid(row=5,column=0,sticky=tk.W)
+    zoombox = tkx.Spinbox2(optionsbox,
+      textvariable=self.values['zoom'],
+      command = self.update_image,
+      width = 8,
+      from_ = 1, to= 16)
+    zoombox.grid(row=5,column=1,sticky=tk.W)
+    self.values['lzss'] = tk.IntVar()
+    compcheck = tk.Checkbutton(optionsbox,
+      text = 'LZSS',
+      variable= self.values['lzss'])
+    compcheck.grid(row=5,column=2)
+    tkx.CreateToolTip(compcheck,
+      'use lzss compression on this group of palettes')
+    
     imgholder = tk.Canvas(imgbox)
     self.widgets['displayimg'] = imgholder
     imgscrolly = tk.Scrollbar(imgbox, 
@@ -268,31 +316,37 @@ class App:
     imgscrollx = tk.Scrollbar(imgbox, 
       orient=tk.HORIZONTAL,
       command=imgholder.xview)
-    imgholder.grid(row=1,column=0,columnspan=3,
-      sticky=tk.W)
-    imgscrollx.grid(row=2,column=0,columnspan=3,
+    imgholder.grid(row=2,column=0,
+      columnspan=3, padx=(5,0),
+      sticky=(tk.N,tk.S,tk.W,tk.E))
+    imgscrollx.grid(row=3,column=0,
+      columnspan=3, padx=(5,0),
       sticky=(tk.W,tk.E))
-    imgscrolly.grid(row=1,column=3,sticky=(tk.N,tk.S))
+    imgscrolly.grid(row=2,column=3,sticky=(tk.N,tk.S))
     imgholder['xscrollcommand'] = imgscrollx.set
     imgholder['yscrollcommand'] = imgscrolly.set
     self.values['imgname']= tk.StringVar(value='image name')
+    
     imgbutt = tk.Button(imgbox,
       text='Change image',
       command=self.change_image)
     imgtext = tk.Label(imgbox,
       textvariable=self.values['imgname'])
-    imgtext.grid(row=0,column=1)
-    imgbutt.grid(row=0,column=2)
+    imgtext.grid(row=1,column=1)
+    imgbutt.grid(row=1,column=2)
     
     #palette area
     palbox = tk.Frame(mainframe)
     # palbox['borderwidth'] = 5
     # palbox['relief'] = tk.GROOVE
-    palbox.grid(row=0,column=4,columnspan=6,
-      rowspan=8,padx=2,
+    palbox.grid(row=0,column=1,
+      padx=5,pady=5,
       sticky=(tk.N,tk.W,tk.S,tk.E))
+    palbox.rowconfigure(1,weight=1)
+    
     self.frames['palbox'] = palbox
-    self.frames['palette'] = tkx.ScrollFrame(palbox,padx=10)
+    self.frames['palette'] = tkx.ScrollFrame(palbox,
+      padx=10)
     buttres = tk.Button(palbox, 
       command = self.reset_colors,
       text = "Reset All")
@@ -306,45 +360,16 @@ class App:
       command = self.clip_hex)
     buttexp.grid(row=0,column=3,sticky=tk.N)
     palentry = tk.Entry(palbox)
-    palentry.grid(row=0,column=0)
+    palentry.grid(row=0,column=0,pady=5)
     self.frames['palette'].grid(row=1,rowspan=3,
       column=0, columnspan=5,
-      sticky=(tk.W,tk.E))
+      sticky=(tk.N,tk.W,tk.S,tk.E))
     tkx.CreateToolTip(buttimp,
       'import palette from clipboard')
     tkx.CreateToolTip(buttexp,
       'export palette to clipboard as hexadecimal')
     # self.frames['palette']['borderwidth']=3
     # self.frames['palette']['relief']=tk.RIDGE
-    
-    #buttons
-    groupnametext = tk.Label(mainframe,text="Name")
-    groupnametext.grid(row=3,column=0,sticky=tk.W)
-    self.values['grouplabel'] = tk.StringVar()
-    groupname = tk.Entry(mainframe,
-      textvariable=self.values['grouplabel'])
-    groupname.grid(row=3,column=1,sticky=(tk.W,tk.E))
-    groupbutton1 = tk.Button(mainframe,text="Add")
-    groupbutton2 = tk.Button(mainframe,text="Remove")
-    groupbutton1.grid(row=3,column=2)
-    groupbutton2.grid(row=3,column=3)
-    
-    self.values['zoom'] = tk.IntVar()
-    zoomlabel = tk.Label(mainframe,text='Zoom')
-    zoomlabel.grid(row=5,column=0,sticky=tk.W)
-    zoombox = tkx.Spinbox2(mainframe,
-      textvariable=self.values['zoom'],
-      command = self.update_image,
-      width = 8,
-      from_ = 1, to= 16)
-    zoombox.grid(row=5,column=1,sticky=tk.W)
-    self.values['lzss'] = tk.IntVar()
-    compcheck = tk.Checkbutton(mainframe,
-      text = 'LZSS',
-      variable= self.values['lzss'])
-    compcheck.grid(row=5,column=2)
-    tkx.CreateToolTip(compcheck,
-      'use lzss compression on this group of palettes')
     
   def _build_menu(self):
     self.menubar = tk.Menu(self.root)
