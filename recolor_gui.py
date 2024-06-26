@@ -119,8 +119,8 @@ class Colorbox(tk.Frame):
       bd = 3,
       from_ = 0, to = 31,
       width = 8,
-      textvariable=self.values['r'],
-      command=self.update_color,
+      textvariable = self.values['r'],
+      command = self.update_color,
       fg = "red")
     self.gbox = tkx.Spinbox2(self,
       bd = 3,
@@ -131,9 +131,9 @@ class Colorbox(tk.Frame):
       fg = "green")
     self.bbox = tkx.Spinbox2(self,
       bd = 3,
-      width=8,
-      from_=0, to=31,
-      textvariable=self.values['b'],
+      width = 8,
+      from_ = 0, to = 31,
+      textvariable = self.values['b'],
       command = self.update_color,
       fg = "blue")
     self.rbox.grid(column = 1 , row = 1)
