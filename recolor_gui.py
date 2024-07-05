@@ -181,7 +181,7 @@ class Colorbox(tk.Frame):
     self.values['ctext'].set(c)
     if self.update: self.update(self)
   
-  def reset_color(self,redraw=True):
+  def reset_color(self,redraw = True):
     '''set color back to source color'''
     self.values['r'].set(self.ocrgb[PD.R])
     self.values['g'].set(self.ocrgb[PD.G])
@@ -200,7 +200,7 @@ class Colorbox(tk.Frame):
     b = self.values['b'].get()
     return (r,g,b)
   
-  def set_color(self,c,redraw=True):
+  def set_color(self,c,redraw = True):
     '''set color to given value
     :param c: rgb tuple
     :param redraw: if true, call update canvas
@@ -211,7 +211,7 @@ class Colorbox(tk.Frame):
     if redraw: self.update_color()
     
 class App:
-  def __init__(self,title="Python GUI"):
+  def __init__(self,title = "Python GUI"):
     self.root = tk.Tk()
     self.root.title(title)
     self.root.geometry('900x900')
@@ -263,107 +263,116 @@ class App:
     
     #image display area
     imgbox = tk.Frame(mainframe)
-    imgbox.grid(row=0,column=0,
+    imgbox.grid(row = 0, column = 0,
       pady = 5, padx = (5,0),
       sticky = (tk.N,tk.S,tk.W,tk.E))
     self.frames['imgbox'] = imgbox
     
     # imgbox.rowconfigure(0,weight=3)
-    imgbox.rowconfigure(2,weight=7)
+    imgbox.rowconfigure(2, weight = 7)
     
-    imgbox.columnconfigure(1,weight=1)
+    imgbox.columnconfigure(1, weight = 1)
     
     optionsbox = tk.Frame(imgbox)
-    optionsbox.grid(row=0,column=1,columnspan=3,
-      pady=5,
-      sticky=tk.N)
+    optionsbox.grid(row = 0,column = 1, 
+      columnspan = 3,
+      pady = 5,
+      sticky = tk.N)
     self.frames['options'] = optionsbox
     
     #buttons
-    groupnametext = tk.Label(optionsbox,text="Name")
-    groupnametext.grid(row=3,column=0,sticky=tk.W)
+    groupnametext = tk.Label(optionsbox,text = "Name")
+    groupnametext.grid(row = 3, 
+      column = 0,
+      sticky = tk.W)
     self.values['grouplabel'] = tk.StringVar()
     groupname = tk.Entry(optionsbox,
-      textvariable=self.values['grouplabel'])
-    groupname.grid(row=3,column=1,sticky=(tk.W,tk.E))
-    groupbutton1 = tk.Button(optionsbox,text="Add")
-    groupbutton2 = tk.Button(optionsbox,text="Remove")
-    groupbutton1.grid(row=3,column=2)
-    groupbutton2.grid(row=3,column=3)
+      textvariable = self.values['grouplabel'])
+    groupname.grid(row = 3,
+      column = 1,
+      sticky = (tk.W,tk.E)
+      )
+    groupbutton1 = tk.Button(optionsbox,text = "Add")
+    groupbutton2 = tk.Button(optionsbox,text = "Remove")
+    groupbutton1.grid(row = 3,column = 2)
+    groupbutton2.grid(row = 3,column = 3)
     
     self.values['zoom'] = tk.IntVar()
-    zoomlabel = tk.Label(optionsbox,text='Zoom')
-    zoomlabel.grid(row=5,column=0,sticky=tk.W)
+    zoomlabel = tk.Label(optionsbox,text = 'Zoom')
+    zoomlabel.grid(row = 5,column = 0,sticky = tk.W)
     zoombox = tkx.Spinbox2(optionsbox,
-      textvariable=self.values['zoom'],
+      textvariable = self.values['zoom'],
       command = self.update_image,
       width = 8,
-      from_ = 1, to= 16)
-    zoombox.grid(row=5,column=1,sticky=tk.W)
+      from_ = 1, to = 16)
+    zoombox.grid(row = 5,column = 1,sticky = tk.W)
     self.values['lzss'] = tk.IntVar()
     compcheck = tk.Checkbutton(optionsbox,
       text = 'LZSS',
-      variable= self.values['lzss'])
-    compcheck.grid(row=5,column=2)
+      variable = self.values['lzss'])
+    compcheck.grid(row = 5,column = 2)
     tkx.CreateToolTip(compcheck,
       'use lzss compression on this group of palettes')
     
     imgholder = tk.Canvas(imgbox)
     self.widgets['displayimg'] = imgholder
     imgscrolly = tk.Scrollbar(imgbox, 
-      orient=tk.VERTICAL, 
-      command=imgholder.yview)
+      orient = tk.VERTICAL, 
+      command = imgholder.yview)
     imgscrollx = tk.Scrollbar(imgbox, 
-      orient=tk.HORIZONTAL,
-      command=imgholder.xview)
-    imgholder.grid(row=2,column=0,
-      columnspan=3, padx=(5,0),
-      sticky=(tk.N,tk.S,tk.W,tk.E))
-    imgscrollx.grid(row=3,column=0,
-      columnspan=3, padx=(5,0),
-      sticky=(tk.W,tk.E))
-    imgscrolly.grid(row=2,column=3,sticky=(tk.N,tk.S))
+      orient = tk.HORIZONTAL,
+      command = imgholder.xview)
+    imgholder.grid(row = 2,column = 0,
+      columnspan = 3, padx = (5,0),
+      sticky = (tk.N,tk.S,tk.W,tk.E))
+    imgscrollx.grid(row = 3,column = 0,
+      columnspan = 3, padx = (5,0),
+      sticky = (tk.W,tk.E))
+    imgscrolly.grid(row = 2,
+      column = 3,
+      sticky = (tk.N,tk.S)
+      )
     imgholder['xscrollcommand'] = imgscrollx.set
     imgholder['yscrollcommand'] = imgscrolly.set
-    self.values['imgname']= tk.StringVar(value='image name')
+    self.values['imgname'] = tk.StringVar(value = 'image name')
     
     imgbutt = tk.Button(imgbox,
-      text='Change image',
-      command=self.change_image)
+      text = 'Change image',
+      command = self.change_image)
     imgtext = tk.Label(imgbox,
-      textvariable=self.values['imgname'])
-    imgtext.grid(row=1,column=1)
-    imgbutt.grid(row=1,column=2)
+      textvariable = self.values['imgname'])
+    imgtext.grid(row = 1,column = 1)
+    imgbutt.grid(row = 1,column = 2)
     
     #palette area
     palbox = tk.Frame(mainframe)
     # palbox['borderwidth'] = 5
     # palbox['relief'] = tk.GROOVE
-    palbox.grid(row=0,column=1,
-      padx=5,pady=5,
-      sticky=(tk.N,tk.W,tk.S,tk.E))
-    palbox.rowconfigure(1,weight=1)
+    palbox.grid(row = 0,column = 1,
+      padx = 5,pady = 5,
+      sticky = (tk.N,tk.W,tk.S,tk.E))
+    palbox.rowconfigure(1, weight = 1)
     
     self.frames['palbox'] = palbox
     self.frames['palette'] = tkx.ScrollFrame(palbox,
-      padx=10)
+      padx = 10)
     buttres = tk.Button(palbox, 
       command = self.reset_colors,
       text = "Reset All")
-    buttres.grid(row=0,column=1,sticky=tk.N)
+    buttres.grid(row = 0,column = 1,sticky = tk.N)
     buttimp = tk.Button(palbox,
-      text="Import",
-      command=self.paste_hex)
-    buttimp.grid(row=0,column=2,sticky=tk.N)
+      text = "Import",
+      command = self.paste_hex)
+    buttimp.grid(row = 0,column = 2,sticky = tk.N)
     buttexp = tk.Button(palbox,
-      text="Export",
+      text = "Export",
       command = self.clip_hex)
-    buttexp.grid(row=0,column=3,sticky=tk.N)
+    buttexp.grid(row = 0,column = 3,sticky = tk.N)
     palentry = tk.Entry(palbox)
-    palentry.grid(row=0,column=0,pady=5)
-    self.frames['palette'].grid(row=1,rowspan=3,
-      column=0, columnspan=5,
-      sticky=(tk.N,tk.W,tk.S,tk.E))
+    palentry.grid(row = 0,column = 0,pady = 5)
+    self.frames['palette'].grid(row = 1,rowspan = 3,
+      column = 0, columnspan = 5,
+      sticky = (tk.N,tk.W,tk.S,tk.E))
     tkx.CreateToolTip(buttimp,
       'import palette from clipboard')
     tkx.CreateToolTip(buttexp,
@@ -373,10 +382,15 @@ class App:
     
   def _build_menu(self):
     self.menubar = tk.Menu(self.root)
-    self.root.config(menu=self.menubar)
+    self.root.config(menu = self.menubar)
     file_menu = tk.Menu(self.menubar)
-    file_menu.add_command(label='Exit',command=self.root.destroy)
-    self.menubar.add_cascade(label='File',menu=file_menu, underline = 0)
+    file_menu.add_command(
+      label = 'Exit',
+      command = self.root.destroy)
+    self.menubar.add_cascade(
+      label = 'File',
+      menu = file_menu,
+      underline = 0)
     
   def change_image(self):
     '''change the displayed image'''
@@ -390,12 +404,12 @@ class App:
       self.altimg = self.sourceimg.copy()
       self.disimg = ImageTk.PhotoImage(
         # file=newimgpath)
-        image=self.altimg)
+        image = self.altimg)
       # do palette stuff here
       self.sourcepal = PD.Palette(
-        flat=self.sourceimg.getpalette())
+        flat = self.sourceimg.getpalette())
       self.dispal = PD.Palette(
-        flat=self.sourceimg.getpalette())
+        flat = self.sourceimg.getpalette())
       #reset zoom level
       self.values['zoom'].set(1)
       #remove any previous color boxes
@@ -412,7 +426,7 @@ class App:
           self.frames['palette'].casing,
           c.flatten(),x,self.update_image)
         f.config(
-          width=self.frames['palbox']['width'],
+          width = self.frames['palbox']['width'],
           borderwidth = 2, relief = tk.RIDGE
           )
         f.grid(row = x, column = 0,
@@ -420,13 +434,13 @@ class App:
         
         # attach update function
         f.obox.configure(
-          to=psize-1,
-          command=lambda x=f: self.move_color(x))
+          to = psize-1,
+          command = lambda x = f: self.move_color(x))
         
         f.obox.bind("<FocusOut>",
-          lambda event,x=f: self.move_color(x))
+          lambda event,x = f: self.move_color(x))
         f.obox.bind("<Return>",
-          lambda event,x=f: self.move_color(x))
+          lambda event,x = f: self.move_color(x))
         
         cfs[x] = f
       self.cfl = cfs
@@ -435,10 +449,10 @@ class App:
       display = self.widgets['displayimg']
       self.showimg = display.create_image(
         (5,5),
-        image=self.disimg
+        image = self.disimg
         )
       display.config(
-        scrollregion=display.bbox(tk.ALL))
+        scrollregion = display.bbox(tk.ALL))
       self.values['imgname'].set(newimgpath.name)
     
   def index_image(self):
@@ -460,8 +474,8 @@ class App:
       #add color if not already in Palette
       if i < 0:
         i = pal.new_color(c)
-      nid[p]= i
-    ni = Image.new(mode='P',size=(w,h))
+      nid[p] = i
+    ni = Image.new(mode = 'P',size = (w,h))
     ni.putdata(nid)
     ni.putpalette(pal.flatten())
     #replace original image with indexed version
@@ -470,7 +484,7 @@ class App:
   def grab_pal(self):
     n = len(self.cfl)
     #form palette from widget values
-    newpal = PD.Palette(length=n)
+    newpal = PD.Palette(length = n)
     for x in range(n):
       cf = self.cfl[x]
       c = cf.get_color()
@@ -497,9 +511,9 @@ class App:
       image=newimg)
     display = self.widgets['displayimg']
     display.itemconfig(
-      self.showimg,image=self.disimg)
+      self.showimg,image = self.disimg)
     display.configure(
-      scrollregion=display.bbox(tk.ALL))
+      scrollregion = display.bbox(tk.ALL))
   
   def update_palette(self):
     for cf in self.cfl:
@@ -527,7 +541,7 @@ class App:
     
     clist = self.cfl.copy()
     #sort color frames by color index
-    clist.sort(key=lambda x: x.values['cid'].get())
+    clist.sort(key = lambda x: x.values['cid'].get())
     x = clist.index(cf)
     #remove item from list
     clist.pop(x)
@@ -551,7 +565,7 @@ class App:
       new[cf.ocrgb] = cf.values['cid'].get()
     order = {}
     
-    newpal = PD.Palette(length=lenpal)
+    newpal = PD.Palette(length = lenpal)
     # map old to new
     for c in range(lenpal):
       p = old[c]
