@@ -46,8 +46,15 @@ class Color:
         # return True
     # return False
   
-  def to_gba_hex(self):
-    h = hex((self.b & 0x1f) << 10 | (self.g&0x1f) << 5 | self.r & 0x1f).removeprefix('0x')
+  def to_gba_hex(self, tc = False):
+    r = TOGBA(self.r) if tc else self.r
+    g = TOGBA(self.g) if tc else self.g
+    b = TOGBA(self.b) if tc else self.b
+    
+    r = r & 0x1f
+    g = (g & 0x1f) << 5
+    b = (b & 0x1f) << 10
+    h = hex(b|g|r).removeprefix('0x')
     
     # add leading 0s if necessary
     if len(h) % 4: h = '0'*(4 - len(h) % 4) + h
@@ -56,8 +63,9 @@ class Color:
     return b.hex()
   
   @classmethod
-  def from_gba_hex(cls, h):
-    '''convert palette from hex string to object'''
+  def from_gba_hex(cls, h, tc = False):
+    '''convert palette from hex string to object
+    set tc to True if converting to true color'''
     
     # remove all whitespace from string
     h = ''.join(h.split())
@@ -69,6 +77,10 @@ class Color:
     r = v & 0x1f
     g = (v >> 5) & 0x1f
     b = (v >> 10) & 0x1f
+    if(tc):
+      r = FROMGBA(r)
+      g = FROMGBA(g)
+      b = FROMGBA(b)
     return Color(r,g,b)
     
   def flatten(self):
@@ -131,15 +143,15 @@ class Palette:
         return c
     return -1
     
-  def to_gba_hex(self):
+  def to_gba_hex(self, tc = False):
     '''convert palette into a hexstring'''
     h = ""
     for c in self.colors:
-      h += c.to_gba_hex()
+      h += c.to_gba_hex(tc)
     return h
   
   @classmethod
-  def from_gba_hex(cls, h):
+  def from_gba_hex(cls, h, tc = False):
     h = ''.join(h.split()) # remove all whitespace
     if len(h) % 4:
       raise ValueError(
@@ -148,7 +160,7 @@ class Palette:
     p = ()
     for b in range(0, s, 4):
       c = h[b : b + 4]
-      p += (Color.from_gba_hex(c),)
+      p += (Color.from_gba_hex(c, tc),)
     return Palette(colorlist = p)
   
   @classmethod
