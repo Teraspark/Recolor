@@ -118,6 +118,9 @@ class Palette:
       return self.flatten() == tuple(other)
     return False
   
+  def __len__(self):
+    return len(self.colors)
+  
   def new_color(self, c):
     '''add new color to palette'''
     self.colors+= (Color(c[R],c[G],c[B]),)
