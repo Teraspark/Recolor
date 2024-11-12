@@ -153,6 +153,17 @@ class Palette:
       h += c.to_gba_hex(tc)
     return h
   
+  def to_data(self):
+    d = []
+    for c in self.colors:
+      z = {}
+      (r,g,b) = c.flatten()
+      z["red"] = r
+      z["green"] = g
+      z["blue"] = b
+      d.append(z)
+    return d
+  
   @classmethod
   def from_gba_hex(cls, h, tc = False):
     h = ''.join(h.split()) # remove all whitespace
@@ -167,6 +178,18 @@ class Palette:
     return Palette(colorlist = p)
   
   @classmethod
+  def from_data(cls, data):
+    # # sort if all colors are indexed
+    # if all('index' in d for d in data):
+      # data.sort(key = lambda c: c.index)
+    p = ()
+    for c in data:
+      r = 0 if 'red' not in c else c['red']
+      g = 0 if 'green' not in c else c['green']
+      b = 0 if 'blue' not in c else c['blue']
+      p += (Color(r, g, b),)
+    return Palette(colorlist = p)
+    
   def flatten(self):
     '''return palette as a tuple'''
     flatpal = ()
