@@ -10,7 +10,7 @@ import tkextras as tkx
 from PIL import Image,ImageTk
 import palette as PD
 
-#File loading/saving functions
+# File loading/saving functions
 def askForFileIn(filedata=()):
 	filedata += (("all files","*.*"),)
 	file = askopenfilename(title="Open",filetypes=filedata)
@@ -35,27 +35,35 @@ def ishex(h):
   else:
     return False
 
-class palstruct():
-  gindex = 0
-  pindex = 0
+class Palstruct():
+  gin = 0 # current group index
   data = {}
   
+  # TODO
+  # - Add iterator
+  # - load/save file
+  # - switch group
+  # - delete group
+  
   def __init__(self):
-    self.data['palg'] = []
+    self.data['palg'] = [{}]
+    self.data['palg']["color"] = []
   
   def savetoml(self,filepath):
     '''load info from toml file'''
     pass
+  
   def loadtoml(self,filepath):
     '''save info into toml file'''
     pass
+  
   def newgroup(self):
     self.data['palg'].append({})
     g = self.data['palg'][-1]
     g['palette'] = {}
     
   def curgroup(self):
-    return self.data['palg'][gindex]
+    return self.data['palg'][gin]
 
 class Colorbox(tk.Frame):
   '''set of widgets made for the rgb section'''
@@ -97,7 +105,7 @@ class Colorbox(tk.Frame):
     
     self.ocbox.grid(column = 1, row = 0)
     self.ncbox.grid(column = 2, row = 0)
-    self.reset_color()
+    self.reset_color(False)
     
     # description box for colors
     self.notes = tkx.EntryEx(self, 
@@ -170,7 +178,7 @@ class Colorbox(tk.Frame):
       )
     self.obox.grid(column = 5, row = 1)
     
-  def update_color(self):
+  def update_color(self, redraw = True):
     '''update canvas color'''
     r = PD.FROMGBA(self.values['r'].get())
     g = PD.FROMGBA(self.values['g'].get())
@@ -179,28 +187,35 @@ class Colorbox(tk.Frame):
     self.ncbox.configure(bg = c)
     c = ','.join(str(x) for x in (r,g,b))
     self.values['ctext'].set(c)
-    if self.update: self.update(self)
+    if redraw and self.update: self.update(self)
   
-  def reset_color(self,redraw = True):
+  def reset_color(self, redraw = True):
     '''set color back to source color'''
     self.values['r'].set(self.ocrgb[PD.R])
     self.values['g'].set(self.ocrgb[PD.G])
     self.values['b'].set(self.ocrgb[PD.B])
-    if redraw:
-      self.update_color()
-    else:
-      c = ','.join(
-        str(PD.FROMGBA(x)) for x in self.ocrgb)
-      self.values['ctext'].set(c)
+    self.update_color(redraw)
     
-  def get_color(self):
+    # if redraw:
+      # self.update_color()
+    # else:
+      # c = ','.join(
+        # str(PD.FROMGBA(x)) for x in self.ocrgb)
+      # self.values['ctext'].set(c)
+    
+  def get_color(self, tc = False):
     '''return color as rgb tuple'''
+    if tc:
+      z = self.values['ctext'].get().split(',')
+      c = tuple(int(x) for x in z)
+      return c
+      
     r = self.values['r'].get()
     g = self.values['g'].get()
     b = self.values['b'].get()
     return (r,g,b)
   
-  def set_color(self,c,redraw = True):
+  def set_color(self, c, redraw = True):
     '''set color to given value
     :param c: rgb tuple
     :param redraw: if true, call update canvas
@@ -208,10 +223,141 @@ class Colorbox(tk.Frame):
     self.values['r'].set(c[PD.R])
     self.values['g'].set(c[PD.G])
     self.values['b'].set(c[PD.B])
-    if redraw: self.update_color()
+    self.update_color(redraw)
     
+class Picture():
+  '''class for handling the current image and palette group'''
+  
+  imgpath = ''
+  srcimg = None
+  srcpal = None
+  altimg = None
+  pin = 0 # current palette index
+  palg = {}
+  # altpal = None
+  order = []
+
+  def __init__(self):
+    pass
+  
+  def change_image(self,newimgpath):
+    sourceimg = Image.open(newimgpath)
+    # convert image to palette mode
+    self.index_image(sourceimg)
+    self.altimg = self.srcimg.copy()
+    self.imgpath = newimgpath
+    
+    # get current palette
+    
+    
+    
+  def index_image(self,srcpic):
+    '''convert source image to palette mode'''
+    # TODO: build new image using given palette
+    
+    # loop through pixels to remove unused colors later
+    if srcpic.mode not in ('RGB','RGBA','P'):
+      prompt = messagebox.showwarning(
+        title = 'Input Image Error',
+        message = 'Invalid Image Format'
+        )
+      raise ValueError('invalid image mode')
+    
+    # if srcpic.mode == 'P':
+      # self.srcimg = srcpic
+      # self.srcpal = PD.Palette(
+        # flat = srcpic.getpalette())
+      # return
+    
+    h = srcpic.height
+    w = srcpic.width
+    nid = [0] * (h*w)
+    d = srcpic.getdata()
+    pal = PD.Palette()
+    if srcpic.mode == 'P':
+      z = []
+      for p in range(0,w*h):
+        c = d[p]
+        # add color if not already in list
+        if c not in z:
+          z.append(c)
+        nid[p] = z.index(c)
+      
+      # build palette from used colors
+      p = srcpic.getpalette()
+      for i in z:
+        x = i * 3
+        c = p[x:x+3]
+        pal.new_color(c)
+    else: 
+      for p in range(0,w*h):
+        c = d[p][:3] # get rgb color
+        i = pal.find_color(c)
+        # add color if not already in Palette
+        if i < 0:
+          i = pal.new_color(c)
+        nid[p] = i
+    ni = Image.new(mode = 'P',size = (w,h))
+    ni.putdata(nid)
+    ni.putpalette(pal.flatten())
+    
+    # replace original image with indexed version
+    self.srcimg = ni
+    self.srcpal = pal
+  
+  def magnify(self,zoom=1):
+    
+    # zoom image to given level
+    show = self.altimg.copy()
+    if zoom > 0:
+      w = show.width * zoom
+      h = show.height * zoom
+      show = show.resize((w,h))
+    return show
+  
+  # FIX THIS
+  def reorder(self, new):
+    old = {}
+    lenpal = len(self.srcpal)
+    #map old color id to color rgb
+    for c in range(lenpal):
+      z = self.srcpal.get_color(c).flatten()
+      old[c] = z
+    
+    order = {}
+    newpal = PD.Palette(length = lenpal)
+    # map old to new
+    for c in range(lenpal):
+      p = old[c]
+      order[c] = new[p]
+      #reorder source palette
+      pz = self.srcpal.get_color(c)
+      newpal.edit_color(new[p],pz)
+    
+    # if new and old order are the same,
+    # copy source image instead of rebuilding
+    if all(x == order[x] for x in order):
+      nid = self.srcimg.getdata()
+    else:
+      #cycle through image to fix color order
+      d = self.srcimg.getdata()
+      w = self.srcimg.width
+      h = self.srcimg.height
+      nid = [0] * (w*h)
+      for p in range(w*h):
+        nid[p] = order[d[p]]
+    
+    self.altimg.putdata(nid)
+  
+  def change_pal(self, palid, dispal):
+    '''store changes to current palette
+      and load next palette'''
+    pass
+
 class App:
   def __init__(self,title = "Python GUI"):
+    self.palf = None
+    self.pic = Picture()
     self.root = tk.Tk()
     self.root.title(title)
     self.root.geometry('900x900')
@@ -235,7 +381,7 @@ class App:
     self.sourceimg = None
    
    # the source image's orignal palette
-    self.sourcepal = None
+    # self.sourcepal = None
     
     # formatted image for the display
     self.altimg = None
@@ -397,28 +543,21 @@ class App:
     
     newimgpath = askForFileIn((('png','*.png'),))
     if isValidFile(newimgpath):
-      self.sourceimg = Image.open(newimgpath)
-      #convert image to palette mode
-      self.index_image()
-      #get original palette
-      self.altimg = self.sourceimg.copy()
-      self.disimg = ImageTk.PhotoImage(
-        # file=newimgpath)
-        image = self.altimg)
-      # do palette stuff here
-      self.sourcepal = PD.Palette(
-        flat = self.sourceimg.getpalette())
-      self.dispal = PD.Palette(
-        flat = self.sourceimg.getpalette())
+      self.pic.change_image(newimgpath)
+      self.dispal = PD.Palette()
+      
       #reset zoom level
       self.values['zoom'].set(1)
+      
+      # write stuff for loading in existing palgroup
+      
       #remove any previous color boxes
       for cf in self.cfl:
         cf.destroy()
-      self.cfl = []
-      psize = len(self.sourcepal.colors)
+      # self.cfl = []
+      psize = len(self.pic.srcpal)
       cfs = [None] * psize
-      for (x,c) in enumerate(self.sourcepal.colors):
+      for (x,c) in enumerate(self.pic.srcpal):
         c.r = PD.TOGBA(c.r)
         c.g = PD.TOGBA(c.g)
         c.b = PD.TOGBA(c.b)
@@ -443,6 +582,9 @@ class App:
           lambda event,x = f: self.move_color(x))
         
         cfs[x] = f
+        #placeholder code until i fix dispal
+        self.dispal.new_color(f.get_color(True))
+        
       self.cfl = cfs
       # update color widgets in 'palette' frame
       # update source palette
@@ -453,7 +595,8 @@ class App:
         )
       display.config(
         scrollregion = display.bbox(tk.ALL))
-      self.values['imgname'].set(newimgpath.name)
+      self.update_image()
+      self.values['imgname'].set(newimgpath.stem)
     
   def index_image(self):
     '''convert sourceimg to palette mode'''
@@ -493,22 +636,21 @@ class App:
     return newpal
     
   def update_image(self,cf = None):
-    
+    '''update imagine on canvas'''
     # do nothing if no image
-    if not self.sourceimg: return
+    if not self.pic.srcimg: return
     
     if cf:
-      c = cf.get_color()
-      c = tuple(PD.FROMGBA(n) for n in c)
+      c = cf.get_color(True)
       self.dispal.edit_color(cf.values['cid'].get(),c)
-    newpal = self.dispal.flatten()
-    # else:
-      # newpal = self.grab_pal().flatten()
-      # newpal = tuple(FROMGBA(n) for n in newpal)
-    newimg = self.zoomed_image()
-    newimg.putpalette(newpal)
+    
+    z = self.values['zoom'].get()
+    newimg = self.pic.magnify(z)
+    newimg.putpalette(self.dispal.flatten())
+    
     self.disimg = ImageTk.PhotoImage(
       image=newimg)
+    
     display = self.widgets['displayimg']
     display.itemconfig(
       self.showimg,image = self.disimg)
@@ -517,8 +659,7 @@ class App:
   
   def update_palette(self):
     for cf in self.cfl:
-      c = cf.get_color()
-      c = tuple(PD.FROMGBA(n) for n in c)
+      c = cf.get_color(True)
       self.dispal.edit_color(cf.values['cid'].get(),c)
   
   def reset_colors(self):
@@ -550,58 +691,16 @@ class App:
     #reorder color index for color frames
     for x,c in enumerate(clist): c.values['cid'].set(x)
     
-  
-    old = {}
-    lenpal = len(self.sourcepal.colors)
-    #map old color id to color rgb
-    for c in range(lenpal):
-      z = self.sourcepal.get_color(c).flatten()
-      old[c] = z
-    
     #build second dict from color frames
     new = {}
     #map color rgb to color id
     for cf in self.cfl:
       new[cf.ocrgb] = cf.values['cid'].get()
-    order = {}
     
-    newpal = PD.Palette(length = lenpal)
-    # map old to new
-    for c in range(lenpal):
-      p = old[c]
-      order[c] = new[p]
-      #reorder source palette
-      pz = self.sourcepal.get_color(c)
-      newpal.edit_color(new[p],pz)
-    
-    # if new and old order are the same,
-    # copy source image instead of rebuilding
-    if all(x == order[x] for x in order):
-      nid = self.sourceimg.getdata()
-    else:
-      #cycle through image to fix color order
-      d = self.sourceimg.getdata()
-      w = self.sourceimg.width
-      h = self.sourceimg.height
-      nid = [0] * (w*h)
-      for p in range(w*h):
-        nid[p] = order[d[p]]
-    
-    self.altimg.putdata(nid)
+    self.pic.reorder(new)
+
     self.update_palette()
     self.update_image()
-  
-  def zoomed_image(self):
-    '''returned zoomed version of source image'''
-    
-    z = self.values['zoom'].get()
-    newimg = self.altimg.copy()
-    newimg.putpalette(self.dispal.flatten())
-    if z > 0:
-      w = newimg.width * z
-      h = newimg.height * z
-      newimg = newimg.resize((w,h))
-    return newimg
   
   def clip_hex(self):
     '''copy palette to clipboard'''
@@ -683,6 +782,7 @@ if __name__ == '__main__':
   reorder index
     
   """
+
 '''
     to do list:
     [ ]cycle through palette groups
