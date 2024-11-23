@@ -121,6 +121,19 @@ class Palette:
   def __len__(self):
     return len(self.colors)
   
+  def __iter__(self):
+    self.max = len(self.colors)
+    self.a = 0
+    return self
+  
+  def __next__(self):
+    if self.a >= self.max:
+      raise StopIteration
+    else:
+      c = self.colors[self.a]
+      self.a += 1
+      return c
+  
   def new_color(self, c):
     '''add new color to palette'''
     self.colors+= (Color(c[R],c[G],c[B]),)
