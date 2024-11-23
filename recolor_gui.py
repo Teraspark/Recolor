@@ -401,8 +401,8 @@ class App:
     self.frames["mainframe"] = mainframe
     mainframe.pack(fill = tk.BOTH, expand = True)
     
-    mainframe.columnconfigure(0, weight = 1)
-    mainframe.columnconfigure(1, weight = 1)
+    mainframe.columnconfigure(0, weight = 3)
+    mainframe.columnconfigure(1, weight = 2)
     
     mainframe.rowconfigure(0, weight = 9)
     # mainframe.rowconfigure(2, weight = 1)
