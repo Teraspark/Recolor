@@ -76,7 +76,9 @@ class Palstruct():
 
 class Colorbox(tk.Frame):
   '''set of widgets made for the rgb section'''
-  def __init__(self, parent, src, id, update = None, *args, **kwargs):
+  def __init__(self, parent, 
+    src, sid, cid, psize, name = '',
+    update = None, oshift = None, *args, **kwargs):
     '''
     :param parent: parent widget
     :param src: source color (tuple)
@@ -84,6 +86,7 @@ class Colorbox(tk.Frame):
     '''
     super().__init__(parent, *args, **kwargs)
     self.ocrgb = src # hold original color
+    self.ocin = sid
     # self.pin = id # palette index
     self.update = update
     self.values = {}
@@ -96,12 +99,12 @@ class Colorbox(tk.Frame):
     # color index in palette
     self.values['index'] = tk.IntVar()
     # description of what the color is for
-    self.values['notes'] = tk.StringVar()
+    self.values['notes'] = tk.StringVar(value = name)
     # rgb converted back to 24 bit color
     self.values['ctext'] = tk.StringVar()
     
     # palette color id
-    self.values['cid'] = tk.IntVar(value = id)
+    self.values['cid'] = tk.IntVar(value = cid)
     
     # source color
     src = tuple(PD.FROMGBA(c) for c in src)
@@ -182,10 +185,16 @@ class Colorbox(tk.Frame):
     self.obox = tkx.Spinbox2(self,
       bd = 3,
       width = 4,
-      from_ = 0, to = 256,
+      from_ = 0, to = psize - 1,
+      command = lambda x = self: oshift(x),
       textvariable = self.values['cid']
       )
     self.obox.grid(column = 5, row = 1)
+    
+    self.obox.bind("<FocusOut>",
+          lambda event, x = self: oshift(x))
+    self.obox.bind("<Return>",
+          lambda event, x = self: oshift(x))
     
   def update_color(self, redraw = True):
     '''update canvas color'''
@@ -245,6 +254,7 @@ class Picture():
   palg = {}
   # altpal = None
   order = []
+  data = Imgdata()
 
   def __init__(self):
     pass
@@ -330,23 +340,24 @@ class Picture():
     return show
   
   # FIX THIS
-  def reorder(self, new):
-    old = {}
-    lenpal = len(self.srcpal)
-    #map old color id to color rgb
-    for c in range(lenpal):
-      z = self.srcpal.get_color(c).flatten()
-      old[c] = z
+  def reorder(self, order):
     
-    order = {}
-    newpal = PD.Palette(length = lenpal)
-    # map old to new
-    for c in range(lenpal):
-      p = old[c]
-      order[c] = new[p]
-      #reorder source palette
-      pz = self.srcpal.get_color(c)
-      newpal.edit_color(new[p],pz)
+    # old = {}
+    # lenpal = len(self.srcpal)
+    # #map old color id to color rgb
+    # for c in range(lenpal):
+      # z = self.srcpal.get_color(c).flatten()
+      # old[c] = z
+    
+    # order = {}
+    # newpal = PD.Palette(length = lenpal)
+    # # map old to new
+    # for c in range(lenpal):
+      # p = old[c]
+      # order[c] = new[p]
+      # #reorder source palette
+      # pz = self.srcpal.get_color(c)
+      # newpal.edit_color(new[p],pz)
     
     # if new and old order are the same,
     # copy source image instead of rebuilding
@@ -367,6 +378,42 @@ class Picture():
     '''store changes to current palette
       and load next palette'''
     pass
+  
+  def pgdata(self, file = None):
+    '''return imgdata; if no imgdata exists, create default'''
+    if not file: file = self.imgpath
+    
+    d = self.data.get_data(file.stem)
+    # if data exists, ensure it is compatible with current image
+    if d:
+      if d['hex'] == self.srcpal.to_gba_hex():
+        return d
+      elif len(d['palette']) == len(self.srcpal):
+        return d
+      else:
+        prompt = messagebox.showwarning(
+          title = 'Config Error',
+          message = 'Invalid Imgdata \n Using Default')
+    # create default img data from src palette
+    d = {}
+    d['img'] = file.stem
+    d['hex'] = self.srcpal.to_gba_hex()
+    d['palette'] = []
+    
+    s = len(self.srcpal)
+    for x in range(s):
+      nc = {}
+      nc['label'] = ''
+      nc['cid'] = x
+      nc['sid'] = x
+      c = self.srcpal.get_color(x).flatten()
+      nc['red'] = c[PD.R]
+      nc['green'] = c[PD.G]
+      nc['blue'] = c[PD.B]
+      d['palette'].append(nc)
+    self.data.set_data(d['img'], d)
+    return d
+
 
 class App:
   def __init__(self,title = "Python GUI"):
@@ -557,24 +604,31 @@ class App:
     
     newimgpath = askForFileIn((('png','*.png'),))
     if isValidFile(newimgpath):
+      if self.cfl: self.update_data()
       self.pic.change_image(newimgpath)
-      self.dispal = PD.Palette()
       
       #reset zoom level
       self.values['zoom'].set(1)
       
       # write stuff for loading in existing palgroup
+      pgd = self.pic.pgdata(newimgpath)
+      pgd = pgd['palette']
       
       #remove any previous color boxes
       for cf in self.cfl:
         cf.destroy()
       # self.cfl = []
-      psize = len(self.pic.srcpal)
-      cfs = [None] * psize
-      for (x,c) in enumerate(self.pic.srcpal):
+      psize = len(pgd)
+      cfs = []
+      self.dispal = PD.Palette(length = psize)
+      
+      for (x,g) in enumerate(pgd):
+        c = (g['red'], g['green'], g['blue'])
+        
         f = Colorbox(
           self.frames['palette'].casing,
-          c.flatten(),x,self.update_image)
+          c, g['sid'], g['cid'], psize, g['label'],
+          self.update_image, self.move_color)
         f.config(
           width = self.frames['palbox']['width'],
           borderwidth = 2, relief = tk.RIDGE
@@ -582,23 +636,12 @@ class App:
         f.grid(row = x, column = 0,
           padx = (5,0))
         
-        # attach update function
-        f.obox.configure(
-          to = psize-1,
-          command = lambda x = f: self.move_color(x))
-        
-        f.obox.bind("<FocusOut>",
-          lambda event,x = f: self.move_color(x))
-        f.obox.bind("<Return>",
-          lambda event,x = f: self.move_color(x))
-        
-        cfs[x] = f
-        #placeholder code until i fix dispal
-        self.dispal.new_color(f.get_color(True))
+        cfs.append(f)
         
       self.cfl = cfs
       # update color widgets in 'palette' frame
       # update source palette
+      self.update_palette()
       display = self.widgets['displayimg']
       self.showimg = display.create_image(
         (5,5),
@@ -702,17 +745,35 @@ class App:
     #reorder color index for color frames
     for x,c in enumerate(clist): c.values['cid'].set(x)
     
-    #build second dict from color frames
+    #build dict from color frames
     new = {}
-    #map color rgb to color id
+    #map source index to current index
     for cf in self.cfl:
-      new[cf.ocrgb] = cf.values['cid'].get()
+      new[cf.ocin] = cf.values['cid'].get()
     
     self.pic.reorder(new)
 
     self.update_palette()
     self.update_image()
   
+  def update_data(self):
+    
+    d = self.pic.pgdata()
+    
+    pal = []
+    for cf in self.cfl:
+      z = cf.values['cid'].get()
+      c = cf.get_color()
+      p = {}
+      p['label'] = cf.values['notes'].get()
+      p['sid'] = cf.ocin
+      p['cid'] = z
+      p['red'] = c[PD.R]
+      p['green'] = c[PD.G]
+      p['blue'] = c[PD.B]
+      pal.append(p)
+    d['palette'] = pal
+    
   def clip_hex(self):
     '''copy palette to clipboard'''
     
