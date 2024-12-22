@@ -312,6 +312,11 @@ class Picture():
     
     # replace original image with indexed version
     self.srcimg = ni
+    # convert to gba color
+    for c in pal:
+      c.r = PD.TOGBA(c.r)
+      c.g = PD.TOGBA(c.g)
+      c.b = PD.TOGBA(c.b)
     self.srcpal = pal
   
   def magnify(self,zoom=1):
@@ -567,9 +572,6 @@ class App:
       psize = len(self.pic.srcpal)
       cfs = [None] * psize
       for (x,c) in enumerate(self.pic.srcpal):
-        c.r = PD.TOGBA(c.r)
-        c.g = PD.TOGBA(c.g)
-        c.b = PD.TOGBA(c.b)
         f = Colorbox(
           self.frames['palette'].casing,
           c.flatten(),x,self.update_image)
