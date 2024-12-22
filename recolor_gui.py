@@ -1,4 +1,5 @@
 # import numpy as np
+import os
 from pathlib import Path
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
@@ -9,6 +10,14 @@ import xml.etree.ElementTree as ET
 import tkextras as tkx
 from PIL import Image,ImageTk
 import palette as PD
+
+# starting directory
+CURDIR = os.getcwd()
+
+# Img data folder
+DATAFOLD = Path(CURDIR)/'ImgInfo'
+
+IMGFOLD = Path(CURDIR)/'Sprites'
 
 # File loading/saving functions
 def askForFileIn(filedata=()):
