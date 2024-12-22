@@ -28,24 +28,6 @@ class Color:
       return self.flatten() == tuple(other)
     return False
   
-  # def is_color(self,red,green,blue):
-    # '''check if object holds the given color'''
-    # if self.r == red and \
-      # self.g == green and \
-      # self.b == blue:
-      # return True
-    # else:
-      # return False
-  
-  # def same(c):
-    # '''check if the color objects hold the same color'''
-    # if type(c) is Color:
-      # if self.r == c.r and \
-        # self.g == c.g and \
-        # self.b == c.b:
-        # return True
-    # return False
-  
   def to_gba_hex(self, tc = False):
     r = TOGBA(self.r) if tc else self.r
     g = TOGBA(self.g) if tc else self.g
@@ -82,6 +64,16 @@ class Color:
       g = FROMGBA(g)
       b = FROMGBA(b)
     return Color(r,g,b)
+    
+  def to_data(self):
+    return {'red':self.r,'green':self.g,'blue':self.b}
+    
+  @classmethod
+  def from_data(cls, data):
+    r = 0 if 'red' not in data else data['red']
+    g = 0 if 'green' not in data else data['green']
+    b = 0 if 'blue' not in data else data['blue']
+    return Color(r, g, b)
     
   def flatten(self):
     '''return rgb as tuple'''
@@ -169,11 +161,7 @@ class Palette:
   def to_data(self):
     d = []
     for c in self.colors:
-      z = {}
-      (r,g,b) = c.flatten()
-      z["red"] = r
-      z["green"] = g
-      z["blue"] = b
+      z = c.to_data()
       d.append(z)
     return d
   
@@ -195,12 +183,9 @@ class Palette:
     # # sort if all colors are indexed
     # if all('index' in d for d in data):
       # data.sort(key = lambda c: c.index)
-    p = ()
-    for c in data:
-      r = 0 if 'red' not in c else c['red']
-      g = 0 if 'green' not in c else c['green']
-      b = 0 if 'blue' not in c else c['blue']
-      p += (Color(r, g, b),)
+    p = [Color.from_data(c) for c in data]
+    # for c in data:
+      # p += (Color.from_data(c))
     return Palette(colorlist = p)
     
   def flatten(self):
