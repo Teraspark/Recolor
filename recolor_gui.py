@@ -214,7 +214,7 @@ class Colorbox(tk.Frame):
     b = PD.FROMGBA(self.values['b'].get())
     c = '#%02x%02x%02x' % (r,g,b)
     self.ncbox.configure(bg = c)
-    c = ','.join(str(x) for x in (r, g, b))
+    c = ', '.join(str(x) for x in (r, g, b))
     self.values['ctext'].set(c)
     if redraw and self.update: self.update(self)
   
@@ -514,7 +514,7 @@ class App:
     self.pic = Picture()
     self.root = tk.Tk()
     self.root.title(title)
-    self.root.geometry('900x900')
+    self.root.geometry('900x960')
     self.root.minsize(900,400)
     self._build_ui()
     self.root.mainloop()
@@ -866,7 +866,7 @@ class App:
     pal = []
     for cf in self.cfl:
       z = cf.values['cid'].get()
-      c = cf.get_color()
+      c = cf.ocrgb
       p = {}
       p['label'] = cf.values['notes'].get()
       p['sid'] = cf.ocin
