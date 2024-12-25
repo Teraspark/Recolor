@@ -741,6 +741,7 @@ class App:
         (5,5),
         image = self.disimg
         )
+      print(self.showimg)
       display.config(
         scrollregion = display.bbox(tk.ALL))
       self.update_image()
