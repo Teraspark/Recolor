@@ -78,7 +78,8 @@ class Colorbox(tk.Frame):
   '''set of widgets made for the rgb section'''
   def __init__(self, parent, 
     src, sid, cid, psize, name = '',
-    update = None, oshift = None, *args, **kwargs):
+    update = None, oshift = None, cswap = None,
+    *args, **kwargs):
     '''
     :param parent: parent widget
     :param src: source color (tuple)
@@ -196,6 +197,16 @@ class Colorbox(tk.Frame):
     self.obox.bind("<Return>",
           lambda event, x = self: oshift(x))
     
+    # swap arrows
+    movu = tk.Button(self,
+      command = lambda x = self: cswap(x, -1),
+      text = '\u2191')
+    movu.grid(column = 0, row = 0, padx = (0,5))
+    movd = tk.Button(self,
+      command = lambda x = self: cswap(x, +1),
+      text = '\u2193')
+    movd.grid(column = 0, row = 1, padx = (0,5))
+    
   def update_color(self, redraw = True):
     '''update canvas color'''
     r = PD.FROMGBA(self.values['r'].get())
@@ -242,6 +253,88 @@ class Colorbox(tk.Frame):
     self.values['g'].set(c[PD.G])
     self.values['b'].set(c[PD.B])
     self.update_color(redraw)
+    
+  def swap(self, ocf):
+    '''swap values with other Colorbox'''
+    
+    # switch source colors
+    z = self.ocin
+    x = ocf.ocin
+    self.ocin = x
+    ocf.ocin = z
+    
+    z = self.ocrgb
+    x = ocf.ocrgb
+    self.ocrgb = x
+    ocf.ocrgb = z
+    z = tuple(PD.FROMGBA(c) for c in z)
+    z = '#%02x%02x%02x' % z
+    ocf.ocbox.configure(bg = z)
+    x = tuple(PD.FROMGBA(c) for c in x)
+    x = '#%02x%02x%02x' % x
+    self.ocbox.configure(bg = x)
+    
+    # switch color index
+    z = self.values['cid'].get()
+    x = ocf.values['cid'].get()
+    self.values['cid'].set(x)
+    ocf.values['cid'].set(z)
+    
+    # switch source colors
+    # z = self.ocrgb
+    # x = ocf.ocrgb
+    
+    # self.ocrgb = x
+    # ocf.ocrgb = z
+    # print(self.ocrgb)
+    # print(c)
+    
+    # update text
+    z = self.values['notes'].get()
+    x = ocf.values['notes'].get()
+    self.values['notes'].set(x)
+    ocf.values['notes'].set(z)
+    
+    # switch current color values
+    z = self.get_color()
+    x = ocf.get_color()
+    self.set_color(x)
+    ocf.set_color(z)
+    
+    # update image and palette
+    self.update_color(False)
+    ocf.update_color(False)
+    
+class Imgdata():
+  '''holds information on how to set up
+  Colorboxes for a specific image'''
+  data = {}
+  current = None
+  
+  def new(self, name):
+    pass
+  
+  def set_data(self, name, stuff):
+    self.data[name] = stuff
+    
+  def get_data(self, name = ''):
+    if name and name not in self.data:
+      return None
+    if name and name in self.data:
+      current = self.data[name]
+    return current
+    
+  def save_data(self):
+    pass
+    
+  def load_data(self, name):
+    return None
+    
+  def validate(self, pal):
+    '''check if image data is correct by
+    comparing with the palette'''
+    if not current: return False
+    return pal.to_gba_hex() == current['hex']
     
 class Picture():
   '''class for handling the current image and palette group'''
@@ -628,7 +721,8 @@ class App:
         f = Colorbox(
           self.frames['palette'].casing,
           c, g['sid'], g['cid'], psize, g['label'],
-          self.update_image, self.move_color)
+          self.update_image, self.move_color,
+          self.swap_color)
         f.config(
           width = self.frames['palbox']['width'],
           borderwidth = 2, relief = tk.RIDGE
@@ -753,6 +847,14 @@ class App:
     
     self.pic.reorder(new)
 
+    self.update_palette()
+    self.update_image()
+  
+  def swap_color(self, cf, v):
+    x = self.cfl.index(cf)
+    x += v
+    if x in range(len(self.cfl)):
+      cf.swap(self.cfl[x])
     self.update_palette()
     self.update_image()
   
