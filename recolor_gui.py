@@ -737,10 +737,11 @@ class App:
       # update source palette
       self.update_palette()
       display = self.widgets['displayimg']
-      self.showimg = display.create_image(
-        (5,5),
-        image = self.disimg
-        )
+      if not self.showimg:
+        self.showimg = display.create_image(
+          (5,5),
+          image = self.disimg
+          )
       print(self.showimg)
       display.config(
         scrollregion = display.bbox(tk.ALL))
