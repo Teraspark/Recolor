@@ -164,17 +164,17 @@ class Colorbox(tk.Frame):
     # event binding for updating
     # after typing new value
     self.rbox.bind('<FocusOut>',
-      lambda event:self.update_color())
+      lambda event: self.update_color())
     self.rbox.bind('<Return>',
-      lambda event:self.update_color())
+      lambda event: self.update_color())
     self.gbox.bind('<FocusOut>',
-      lambda event:self.update_color())
+      lambda event: self.update_color())
     self.gbox.bind('<Return>',
-      lambda event:self.update_color())
+      lambda event: self.update_color())
     self.bbox.bind('<FocusOut>',
-      lambda event:self.update_color())
+      lambda event: self.update_color())
     self.bbox.bind('<Return>',
-      lambda event:self.update_color())
+      lambda event: self.update_color())
     
     self.rgbtext = tkx.EntryEx(self,
       width = 12,
@@ -214,7 +214,7 @@ class Colorbox(tk.Frame):
     b = PD.FROMGBA(self.values['b'].get())
     c = '#%02x%02x%02x' % (r,g,b)
     self.ncbox.configure(bg = c)
-    c = ','.join(str(x) for x in (r,g,b))
+    c = ','.join(str(x) for x in (r, g, b))
     self.values['ctext'].set(c)
     if redraw and self.update: self.update(self)
   
@@ -352,7 +352,7 @@ class Picture():
   def __init__(self):
     pass
   
-  def change_image(self,newimgpath):
+  def change_image(self, newimgpath):
     sourceimg = Image.open(newimgpath)
     # convert image to palette mode
     self.index_image(sourceimg)
@@ -363,7 +363,7 @@ class Picture():
     
     
     
-  def index_image(self,srcpic):
+  def index_image(self, srcpic):
     '''convert source image to palette mode'''
     # TODO: build new image using given palette
     
@@ -462,7 +462,7 @@ class Picture():
       w = self.srcimg.width
       h = self.srcimg.height
       nid = [0] * (w*h)
-      for p in range(w*h):
+      for p in range(w * h):
         nid[p] = order[d[p]]
     
     self.altimg.putdata(nid)
@@ -818,7 +818,7 @@ class App:
     self.update_palette()
     self.update_image()
   
-  def move_color(self,cf):
+  def move_color(self, cf):
     #do nothing if no color frames
     if not self.cfl: return
     
@@ -835,7 +835,7 @@ class App:
     #remove item from list
     clist.pop(x)
     #move item to place in list
-    clist.insert(cf.values['cid'].get(),cf)
+    clist.insert(cf.values['cid'].get(), cf)
     #reorder color index for color frames
     for x,c in enumerate(clist): c.values['cid'].set(x)
     
