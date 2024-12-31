@@ -4,7 +4,7 @@
 RED = 0
 GREEN = 1
 BLUE = 2
-R,G,B = 0,1,2
+R, G, B = 0, 1, 2
 
 def TOGBA(v):
   '''convert from true color to 15bit gba color'''
@@ -16,47 +16,38 @@ def FROMGBA(v):
 
 class Color:
   '''Represents the RGB values of a color'''
-  def __init__(self,red=0,green=0,blue=0):
+  def __init__(self, red = 0, green = 0, blue = 0):
     self.r = red
     self.g = green
     self.b = blue
   
-  def __eq__(self,other):
-    if isinstance(other,self.__class__):
+  def __eq__(self, other):
+    if isinstance(other, self.__class__):
       return self.flatten() == other.flatten()
-    elif isinstance(other,(tuple,list)):
+    elif isinstance(other, (tuple, list)):
       return self.flatten() == tuple(other)
     return False
   
-  # def is_color(self,red,green,blue):
-    # '''check if object holds the given color'''
-    # if self.r == red and \
-      # self.g == green and \
-      # self.b == blue:
-      # return True
-    # else:
-      # return False
-  
-  # def same(c):
-    # '''check if the color objects hold the same color'''
-    # if type(c) is Color:
-      # if self.r == c.r and \
-        # self.g == c.g and \
-        # self.b == c.b:
-        # return True
-    # return False
-  
-  def to_gba_hex(self):
-    h = hex((self.b&0x1f)<<10 | (self.g&0x1f) << 5 | self.r&0x1f).removeprefix('0x')
-    #add leading 0s if necessary
-    if len(h)%4: h = '0'*(4-len(h)%4) + h
+  def to_gba_hex(self, tc = False):
+    r = TOGBA(self.r) if tc else self.r
+    g = TOGBA(self.g) if tc else self.g
+    b = TOGBA(self.b) if tc else self.b
+    
+    r = r & 0x1f
+    g = (g & 0x1f) << 5
+    b = (b & 0x1f) << 10
+    h = hex(b|g|r).removeprefix('0x')
+    
+    # add leading 0s if necessary
+    if len(h) % 4: h = '0'*(4 - len(h) % 4) + h
     b = bytearray.fromhex(h)
     b.reverse()
     return b.hex()
   
   @classmethod
-  def from_gba_hex(cls,h):
-    '''convert palette from hex string to object'''
+  def from_gba_hex(cls, h, tc = False):
+    '''convert palette from hex string to object
+    set tc to True if converting to true color'''
     
     # remove all whitespace from string
     h = ''.join(h.split())
@@ -64,11 +55,25 @@ class Color:
       raise ValueError('hexstring is invalid size')
     b = bytearray.fromhex(h)
     b.reverse()
-    v = int(b.hex(),16)
+    v = int(b.hex(), 16)
     r = v & 0x1f
     g = (v >> 5) & 0x1f
     b = (v >> 10) & 0x1f
+    if(tc):
+      r = FROMGBA(r)
+      g = FROMGBA(g)
+      b = FROMGBA(b)
     return Color(r,g,b)
+    
+  def to_data(self):
+    return {'red':self.r,'green':self.g,'blue':self.b}
+    
+  @classmethod
+  def from_data(cls, data):
+    r = 0 if 'red' not in data else data['red']
+    g = 0 if 'green' not in data else data['green']
+    b = 0 if 'blue' not in data else data['blue']
+    return Color(r, g, b)
     
   def flatten(self):
     '''return rgb as tuple'''
@@ -77,7 +82,7 @@ class Color:
 class Palette:
   '''colorlist is an array of Color class objects'''
   colors = ()
-  def __init__(self,flat=(),length=0,colorlist=None):
+  def __init__(self, flat=(), length = 0, colorlist = None):
     '''
     flat: 1d tuple for all rgb values
     
@@ -93,35 +98,51 @@ class Palette:
         raise ValueError('invalid flat palette length')
       for x in range(0,f,3):
         self.colors += (
-          Color(flat[x],flat[x+1],flat[x+2]),)
+          Color(flat[x],flat[x + 1], flat[x + 2]),)
     elif length:
       for c in range(length):
         self.colors += (Color(),)
     
-  def __eq__(self,other):
+  def __eq__(self, other):
     if isinstance(other,self.__class__):
       return self.flatten() == other.flatten()
-    elif isinstance(other,(tuple,list)):
+    elif isinstance(other, (tuple, list)):
       return self.flatten() == tuple(other)
     return False
   
-  def new_color(self,c):
+  def __len__(self):
+    return len(self.colors)
+  
+  def __iter__(self):
+    self.max = len(self.colors)
+    self.a = 0
+    return self
+  
+  def __next__(self):
+    if self.a >= self.max:
+      raise StopIteration
+    else:
+      c = self.colors[self.a]
+      self.a += 1
+      return c
+  
+  def new_color(self, c):
     '''add new color to palette'''
     self.colors+= (Color(c[R],c[G],c[B]),)
     return len(self.colors)-1
     
-  def edit_color(self,i,c):
+  def edit_color(self, i, c):
     '''edit existing color in palette'''
     # if 0 < i < len(self.colors):
-    if isinstance(c,Color): c = c.flatten()
-    self.colors[i].r= c[RED]
-    self.colors[i].g= c[GREEN]
-    self.colors[i].b= c[BLUE]
+    if isinstance(c, Color): c = c.flatten()
+    self.colors[i].r = c[RED]
+    self.colors[i].g = c[GREEN]
+    self.colors[i].b = c[BLUE]
     
-  def get_color(self,i):
+  def get_color(self, i):
     return self.colors[i]
   
-  def find_color(self,cx):
+  def find_color(self, cx):
     '''return index of color in Palette
       return -1 if i not in Palette'''
     s = len(self.colors)
@@ -130,26 +151,43 @@ class Palette:
         return c
     return -1
     
-  def to_gba_hex(self):
+  def to_gba_hex(self, tc = False):
     '''convert palette into a hexstring'''
     h = ""
     for c in self.colors:
-      h += c.to_gba_hex()
+      h += c.to_gba_hex(tc)
     return h
   
+  def to_data(self):
+    d = []
+    for c in self.colors:
+      z = c.to_data()
+      d.append(z)
+    return d
+  
   @classmethod
-  def from_gba_hex(cls,h):
-    h = ''.join(h.split()) #remove all whitespace
-    if len(h)%4:
+  def from_gba_hex(cls, h, tc = False):
+    h = ''.join(h.split()) # remove all whitespace
+    if len(h) % 4:
       raise ValueError(
         'hex string is invalid length')
     s = len(h)
     p = ()
-    for b in range(0,s,4):
-      c = h[b:b+4]
-      p += (Color.from_gba_hex(c),)
-    return Palette(colorlist=p)
+    for b in range(0, s, 4):
+      c = h[b : b + 4]
+      p += (Color.from_gba_hex(c, tc),)
+    return Palette(colorlist = p)
   
+  @classmethod
+  def from_data(cls, data):
+    # # sort if all colors are indexed
+    # if all('index' in d for d in data):
+      # data.sort(key = lambda c: c.index)
+    p = [Color.from_data(c) for c in data]
+    # for c in data:
+      # p += (Color.from_data(c))
+    return Palette(colorlist = p)
+    
   def flatten(self):
     '''return palette as a tuple'''
     flatpal = ()
